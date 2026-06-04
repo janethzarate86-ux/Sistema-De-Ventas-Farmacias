@@ -4,36 +4,42 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Macroxel — Monitor Firebase limpio</title>
 <style>
-:root{--bg:#eaf8ff;--card:#fff;--ink:#073459;--mut:#63809a;--edge:#b9ddf3;--blue:#1689f7;--green:#19c978;--red:#e84662;--shadow:0 12px 28px rgba(38,94,130,.14)}*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#eaf8ff,#f9fdff);font-family:Arial,Helvetica,sans-serif;color:var(--ink)}.top,.wrap{max-width:1120px;margin:auto}.top{padding:18px 14px 5px}.topLine{display:flex;align-items:center;justify-content:space-between;gap:10px}.top h1{margin:0;font-size:25px}.topStatus{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--edge);background:#ffffffcc;border-radius:999px;padding:5px 9px;font-size:11px;color:var(--mut);font-weight:800}.topStatus .dot{width:9px;height:9px;box-shadow:0 0 7px currentColor}.top p{display:none}.wrap{padding:12px 14px 30px}.home{display:none}.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:8px 0 16px}.tab,.homeCard,button,input,select{font-weight:900;color:var(--ink)}.tab{border:1px solid var(--edge);background:#fff;border-radius:20px;padding:16px 10px;box-shadow:var(--shadow);cursor:pointer}.tab.active{background:#dff4ff;border-color:#54bdf5}.layout{display:grid;grid-template-columns:315px 1fr;gap:14px}.layout.noSide{grid-template-columns:1fr}.layout.noSide aside{display:none}.box{background:#ffffffd9;border:1px solid var(--edge);border-radius:22px;box-shadow:var(--shadow);padding:14px}label{font-size:12px;color:var(--mut);display:block;margin-bottom:5px}input,select{width:100%;border:1px solid var(--edge);border-radius:15px;padding:12px;background:#f8fdff}.primary{width:100%;border:0;border-radius:15px;padding:13px;background:linear-gradient(180deg,#31a4ff,#1376e9);color:#fff}.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field{margin-bottom:10px}.pill{display:inline-flex;gap:8px;align-items:center;background:#f7fcff;border:1px solid var(--edge);border-radius:999px;padding:8px 12px;margin:8px 0}.dot{width:12px;height:12px;border-radius:50%;background:var(--red);box-shadow:0 0 12px var(--red)}.dot.ok{background:var(--green);box-shadow:0 0 12px var(--green)}.dot.warn{background:#ffc247;box-shadow:0 0 12px #ffc247}.small{font-size:12px;color:var(--mut)}.store{background:#f7fcff;border:1px solid var(--edge);border-radius:18px;padding:12px;margin:9px 0;cursor:pointer}.store.active{background:#dcf3ff;border-color:#38aaf6}.store b{display:block}.store small{color:#7c9bb6}.head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.head h2{margin:0;font-size:24px}.updated{border:1px solid var(--edge);background:#f5fbff;border-radius:999px;padding:8px 12px;color:var(--mut);font-size:12px}.bar{margin:12px 0;padding:12px 14px;border:1px solid var(--edge);background:#f7fcff;border-radius:18px;font-weight:900}.section{font-size:20px;font-weight:900;margin:18px 0 10px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.card{background:linear-gradient(180deg,#fff,#f4fbff);border:1px solid var(--edge);border-radius:28px;min-height:125px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:12px;box-shadow:var(--shadow)}.label{font-size:13px;font-weight:900;text-transform:uppercase}.value{font-size:28px;font-weight:900;margin:10px 0 4px}.hint{font-size:12px;color:var(--mut)}table{width:100%;border-collapse:collapse;background:#f7fcff;border-radius:16px;overflow:hidden}.chartGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.chartBox{background:#f7fcff;border:1px solid var(--edge);border-radius:22px;padding:14px;box-shadow:var(--shadow)}.chartTitle{font-size:16px;font-weight:900;margin:0 0 10px}.bars{display:flex;flex-direction:column;gap:9px}.barRow{display:grid;grid-template-columns:96px 1fr 84px;gap:8px;align-items:center;font-size:12px}.barName{font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.barTrack{height:18px;border-radius:999px;background:#dceffb;overflow:hidden}.barFill{height:100%;border-radius:999px;background:linear-gradient(90deg,#1689f7,#19c978);min-width:2px}.barVal{text-align:right;font-weight:900}.health{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.healthCard{border:1px solid var(--edge);border-radius:18px;background:#fff;padding:12px}.healthCard b{display:block;font-size:13px}.healthCard span{display:block;font-size:24px;font-weight:900;margin-top:7px}.badgeGood{color:var(--green)}.badgeWarn{color:#d99000}.badgeBad{color:var(--red)}th{background:#dff2ff;text-align:left;font-size:12px}td,th{padding:10px;border-bottom:1px solid #d4ecfb;vertical-align:top}.hidden{display:none!important}.mobileBack,.satBox{display:none}
-@media(max-width:760px){.top{padding:14px 12px 0}.top h1{font-size:18px}.topLine{align-items:flex-start}.topStatus{font-size:10px;padding:4px 8px;white-space:nowrap}.tabs{display:none}.wrap{padding:10px}.satBox{display:none!important}.satIcon{font-size:36px;background:#f3fbff;border:1px solid var(--edge);border-radius:22px;padding:12px;position:relative}.satIcon .dot{position:absolute;right:5px;bottom:7px}.home{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;min-height:calc(100vh - 160px)}.homeCard{background:linear-gradient(180deg,#fff,#edf9ff);border:1px solid var(--edge);box-shadow:var(--shadow);border-radius:28px;min-height:190px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 10px}.homeIcon{font-size:54px}.homeTitle{font-size:22px;font-weight:900;margin:18px 0 10px}.homeSub{font-size:14px;color:var(--mut);font-weight:800}body:not(.mobileViewing) .layout{display:none!important}body.mobileViewing .home{display:none!important}body.mobileViewing .layout{display:block!important}.mobileViewing aside{display:none!important}.mobileViewing .layout.configMode aside{display:block!important;margin-bottom:14px}.mobileViewing .mobileBack{display:block;width:100%;border:1px solid var(--edge);border-radius:18px;background:#fff;padding:14px;margin:0 0 12px;font-weight:900;box-shadow:var(--shadow)}.layout{grid-template-columns:1fr}.box{width:100%;margin-bottom:14px}.grid{grid-template-columns:1fr}.chartGrid{grid-template-columns:1fr}.health{grid-template-columns:1fr}.barRow{grid-template-columns:82px 1fr 74px}.card{min-height:110px;align-items:flex-start;text-align:left;padding:18px}.value{font-size:30px}.head{display:block}.updated{display:inline-block;margin-top:8px}table,thead,tbody,tr,th,td{display:block;width:100%}thead{display:none}tbody tr{background:#f7fcff;border:1px solid var(--edge);border-radius:18px;margin:10px 0;padding:8px 10px;box-shadow:0 8px 18px rgba(33,90,130,.08)}td{border-bottom:1px solid #d4ecfb;display:flex;justify-content:space-between;gap:12px;text-align:right;padding:10px 4px;font-size:14px}td:last-child{border-bottom:0}td:before{content:attr(data-label);font-weight:900;text-align:left;min-width:45%}td[colspan]{display:block;text-align:left}td[colspan]:before{content:''}}
+:root{--bg:#eaf8ff;--card:#fff;--ink:#073459;--mut:#63809a;--edge:#b9ddf3;--blue:#1689f7;--green:#19c978;--red:#e84662;--shadow:0 12px 28px rgba(38,94,130,.14)}*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#eaf8ff,#f9fdff);font-family:Arial,Helvetica,sans-serif;color:var(--ink)}.top,.wrap{max-width:1120px;margin:auto}.top{padding:18px 14px 5px}.topLine{display:flex;align-items:center;justify-content:space-between;gap:10px}.top h1{margin:0;font-size:25px}.topStatus{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--edge);background:#ffffffcc;border-radius:999px;padding:5px 9px;font-size:11px;color:var(--mut);font-weight:800}.topStatus .dot{width:9px;height:9px;box-shadow:0 0 7px currentColor}.top p{display:none}.wrap{padding:12px 14px 30px}.home{display:none}.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:8px 0 16px}.tab,.homeCard,button,input,select{font-weight:900;color:var(--ink)}.tab{border:1px solid var(--edge);background:#fff;border-radius:20px;padding:16px 10px;box-shadow:var(--shadow);cursor:pointer}.tab.active{background:#dff4ff;border-color:#54bdf5}.layout{display:grid;grid-template-columns:315px 1fr;gap:14px}.layout.noSide{grid-template-columns:1fr}.layout.noSide aside{display:none}.box{background:#ffffffd9;border:1px solid var(--edge);border-radius:22px;box-shadow:var(--shadow);padding:14px}label{font-size:12px;color:var(--mut);display:block;margin-bottom:5px}input,select{width:100%;border:1px solid var(--edge);border-radius:15px;padding:12px;background:#f8fdff}.primary{width:100%;border:0;border-radius:15px;padding:13px;background:linear-gradient(180deg,#31a4ff,#1376e9);color:#fff}.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field{margin-bottom:10px}.pill{display:inline-flex;gap:8px;align-items:center;background:#f7fcff;border:1px solid var(--edge);border-radius:999px;padding:8px 12px;margin:8px 0}.dot{width:12px;height:12px;border-radius:50%;background:var(--red);box-shadow:0 0 12px var(--red)}.dot.ok{background:var(--green);box-shadow:0 0 12px var(--green)}.dot.warn{background:#ffc247;box-shadow:0 0 12px #ffc247}.small{font-size:12px;color:var(--mut)}.store{background:#f7fcff;border:1px solid var(--edge);border-radius:18px;padding:12px;margin:9px 0;cursor:pointer}.store.active{background:#dcf3ff;border-color:#38aaf6}.store b{display:block}.store small{color:#7c9bb6}.head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.head h2{margin:0;font-size:24px}.updated{border:1px solid var(--edge);background:#f5fbff;border-radius:999px;padding:8px 12px;color:var(--mut);font-size:12px}.bar{margin:12px 0;padding:12px 14px;border:1px solid var(--edge);background:#f7fcff;border-radius:18px;font-weight:900}.section{font-size:20px;font-weight:900;margin:18px 0 10px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.card{background:linear-gradient(180deg,#fff,#f4fbff);border:1px solid var(--edge);border-radius:28px;min-height:125px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:12px;box-shadow:var(--shadow)}.label{font-size:13px;font-weight:900;text-transform:uppercase}.value{font-size:28px;font-weight:900;margin:10px 0 4px}.hint{font-size:12px;color:var(--mut)}table{width:100%;border-collapse:collapse;background:#f7fcff;border-radius:16px;overflow:hidden}.chartGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.chartBox{background:#f7fcff;border:1px solid var(--edge);border-radius:22px;padding:14px;box-shadow:var(--shadow)}.chartTitle{font-size:16px;font-weight:900;margin:0 0 10px}.bars{display:flex;flex-direction:column;gap:9px}.barRow{display:grid;grid-template-columns:96px 1fr 84px;gap:8px;align-items:center;font-size:12px}.barName{font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.barTrack{height:18px;border-radius:999px;background:#dceffb;overflow:hidden}.barFill{height:100%;border-radius:999px;background:linear-gradient(90deg,#1689f7,#19c978);min-width:2px}.barVal{text-align:right;font-weight:900}.health{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.healthCard{border:1px solid var(--edge);border-radius:18px;background:#fff;padding:12px}.healthCard b{display:block;font-size:13px}.healthCard span{display:block;font-size:24px;font-weight:900;margin-top:7px}.permHead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:10px 0}.permStore{border:1px solid var(--edge);background:#f7fcff;border-radius:20px;padding:12px;margin:12px 0}.permUser{border:1px solid #d4ecfb;background:#fff;border-radius:18px;padding:12px;margin:10px 0}.permUser h3{margin:0;font-size:18px}.permUser{padding:0;overflow:hidden}.permUserBtn{width:100%;border:0;background:#fff;color:var(--ink);padding:15px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;cursor:pointer}.permUserBtn b{font-size:18px}.permUserBtn small{display:block;color:var(--mut);margin-top:3px}.permArrow{font-size:18px;transition:.18s}.permUser.open .permArrow{transform:rotate(90deg)}.permBody{display:none;border-top:1px solid #d4ecfb;padding:12px}.permUser.open .permBody{display:block}.permGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.permItem{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid var(--edge);border-radius:14px;background:#f8fdff;padding:10px;font-size:12px;font-weight:900}.permItem input{width:auto}.permActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.miniBtn{border:1px solid var(--edge);border-radius:14px;background:#fff;padding:10px 12px;font-weight:900;color:var(--ink)}.saveBtn{border:0;border-radius:14px;background:linear-gradient(180deg,#31a4ff,#1376e9);color:#fff;padding:11px 14px;font-weight:900}.permMsg{font-size:12px;color:var(--mut);font-weight:900;margin-left:auto}.badgeGood{color:var(--green)}.badgeWarn{color:#d99000}.badgeBad{color:var(--red)}th{background:#dff2ff;text-align:left;font-size:12px}td,th{padding:10px;border-bottom:1px solid #d4ecfb;vertical-align:top}.hidden{display:none!important}.mobileBack,.satBox{display:none}
+@media(max-width:760px){.top{padding:14px 12px 0}.top h1{font-size:18px}.topLine{align-items:flex-start}.topStatus{font-size:10px;padding:4px 8px;white-space:nowrap}.tabs{display:none}.wrap{padding:10px}.satBox{display:none!important}.satIcon{font-size:36px;background:#f3fbff;border:1px solid var(--edge);border-radius:22px;padding:12px;position:relative}.satIcon .dot{position:absolute;right:5px;bottom:7px}.home{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;min-height:calc(100vh - 160px)}.homeCard{background:linear-gradient(180deg,#fff,#edf9ff);border:1px solid var(--edge);box-shadow:var(--shadow);border-radius:28px;min-height:190px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 10px}.homeIcon{font-size:54px}.homeTitle{font-size:22px;font-weight:900;margin:18px 0 10px}.homeSub{font-size:14px;color:var(--mut);font-weight:800}body:not(.mobileViewing) .layout{display:none!important}body.mobileViewing .home{display:none!important}body.mobileViewing .layout{display:block!important}.mobileViewing aside{display:none!important}.mobileViewing .layout.configMode aside{display:block!important;margin-bottom:14px}.mobileViewing .mobileBack{display:block;width:100%;border:1px solid var(--edge);border-radius:18px;background:#fff;padding:14px;margin:0 0 12px;font-weight:900;box-shadow:var(--shadow)}.layout{grid-template-columns:1fr}.box{width:100%;margin-bottom:14px}.grid{grid-template-columns:1fr}.chartGrid{grid-template-columns:1fr}.health{grid-template-columns:1fr}.permGrid{grid-template-columns:1fr}.permHead{display:block}.permMsg{display:block;margin-top:8px}.barRow{grid-template-columns:82px 1fr 74px}.card{min-height:110px;align-items:flex-start;text-align:left;padding:18px}.value{font-size:30px}.head{display:block}.updated{display:inline-block;margin-top:8px}table,thead,tbody,tr,th,td{display:block;width:100%}thead{display:none}tbody tr{background:#f7fcff;border:1px solid var(--edge);border-radius:18px;margin:10px 0;padding:8px 10px;box-shadow:0 8px 18px rgba(33,90,130,.08)}td{border-bottom:1px solid #d4ecfb;display:flex;justify-content:space-between;gap:12px;text-align:right;padding:10px 4px;font-size:14px}td:last-child{border-bottom:0}td:before{content:attr(data-label);font-weight:900;text-align:left;min-width:45%}td[colspan]{display:block;text-align:left}td[colspan]:before{content:''}}
 </style></head><body>
 <div class="top"><div class="topLine"><h1>🛰️ Macroxel — Monitor Resumen Firebase</h1><span class="topStatus"><span id="dot2" class="dot"></span><span id="status2">Abriendo</span></span></div></div>
 <div class="wrap">
 
-<div class="home"><div class="homeCard" data-go="panel"><div class="homeIcon">📊</div><div class="homeTitle">Resumen día</div><div class="homeSub">Ventas y gastos</div></div><div class="homeCard" data-go="sucursales"><div class="homeIcon">🏪</div><div class="homeTitle">Sucursales</div><div class="homeSub">Jornada y estado</div></div><div class="homeCard" data-go="mensual"><div class="homeIcon">📅</div><div class="homeTitle">Mensual</div><div class="homeSub">Resultado del mes</div></div><div class="homeCard" data-go="anomalias"><div class="homeIcon">⚠️</div><div class="homeTitle">Anomalias</div><div class="homeSub">Alertas guardadas</div></div><div class="homeCard" data-go="graficos"><div class="homeIcon">📈</div><div class="homeTitle">Gráficos</div><div class="homeSub">Comparativa tiendas</div></div></div>
+<div class="home"><div class="homeCard" data-go="panel"><div class="homeIcon">📊</div><div class="homeTitle">Resumen día</div><div class="homeSub">Ventas y gastos</div></div><div class="homeCard" data-go="sucursales"><div class="homeIcon">🏪</div><div class="homeTitle">Sucursales</div><div class="homeSub">Jornada y estado</div></div><div class="homeCard" data-go="mensual"><div class="homeIcon">📅</div><div class="homeTitle">Mensual</div><div class="homeSub">Resultado del mes</div></div><div class="homeCard" data-go="anomalias"><div class="homeIcon">⚠️</div><div class="homeTitle">Anomalias</div><div class="homeSub">Alertas guardadas</div></div><div class="homeCard" data-go="graficos"><div class="homeIcon">📈</div><div class="homeTitle">Gráficos</div><div class="homeSub">Comparativa tiendas</div></div><div class="homeCard" data-go="permisos"><div class="homeIcon">🔐</div><div class="homeTitle">Permisos</div><div class="homeSub">Módulos por vendedor</div></div></div>
 <button id="mobileBack" class="mobileBack">⬅️ Menú principal</button>
 <div class="tabs"><button class="tab active" data-tab="panel">📊 Resumen día</button><button class="tab" data-tab="sucursales">🏪 Sucursales</button><button class="tab" data-tab="mensual">📅 Mensual</button><button class="tab" data-tab="anomalias">⚠️ Anomalias</button><button class="tab" data-tab="graficos">📈 Gráficos</button><button class="tab" data-tab="permisos">🔐 Permisos</button></div>
-<input id="dburl" type="hidden" value="https://registrodedatosfirebase-default-rtdb.firebaseio.com"><div class="layout"><aside class="box" id="configBox"><div class="section" style="margin-top:0">⚙️ Configuración</div><div class="field"><label>Fecha</label><input id="fecha" type="date"></div><div class="field"><label>Usuario</label><select id="usuario"><option value="__ALL__">(todos)</option></select></div><div class="small">Rutas leídas:<br>/reportes_diarios<br>/satelite<br>/reportes_mensuales<br>/anom_alerts<br>/anomalias</div><div id="stores" style="margin-top:14px"></div></aside><main>
+<input id="dburl" type="hidden" value="https://registrodedatosfirebase-default-rtdb.firebaseio.com"><div class="layout"><aside class="box" id="configBox"><div class="section" style="margin-top:0">⚙️ Configuración</div><div class="field"><label>Fecha</label><input id="fecha" type="date"></div><div class="field"><label>Usuario</label><select id="usuario"><option value="__ALL__">(todos)</option></select></div><div class="small">Rutas leídas:<br>/reportes_diarios<br>/satelite<br>/reportes_mensuales<br>/anom_alerts<br>/anomalias<br>/permisos</div><div id="stores" style="margin-top:14px"></div></aside><main>
 <section id="tab-panel" class="box"><div class="head"><div><h2 id="title">GLOBAL</h2><div id="subtitle" class="small"></div></div><div id="updated" class="updated">—</div></div><div id="resumeLine" class="bar"></div><div class="section">📌 Resumen principal</div><div id="cards" class="grid"></div><div class="section">Detalle por usuario</div><table id="userTable"></table></section>
 <section id="tab-sucursales" class="box hidden"><div class="head"><h2>🏪 Sucursales</h2><div id="storeCount" class="updated">0</div></div><table id="storeTable"></table></section>
 <section id="tab-mensual" class="box hidden"><div class="head"><h2>📅 Reporte mensual</h2><div class="updated" id="monthLabel">—</div></div><table id="monthTable"></table></section>
 <section id="tab-anomalias" class="box hidden"><div class="head"><h2>⚠️ Anomalias</h2><div class="updated" id="anomCount">0</div></div><table id="anomTable"></table></section>
 <section id="tab-graficos" class="box hidden"><div class="head"><h2>📈 Gráficos de tiendas</h2><div class="updated" id="graphLabel">—</div></div><div class="bar">Comparativa tomada directo de Firebase para detectar rendimiento, gastos, cancelaciones, anomalías y horas operativas.</div><div id="graphHealth" class="health"></div><div class="section">Comparativas principales</div><div id="graphGrid" class="chartGrid"></div></section>
+<section id="tab-permisos" class="box hidden"><div class="head"><h2>🔐 Permisos vendedores</h2><div class="updated" id="permStatus">Firebase</div></div><div class="bar">Activa o desactiva módulos por vendedor. Se guarda directo en Firebase en <b>/permisos/{sucursal}/{usuario}/modules</b>.</div><div id="permPanel"></div></section>
 </main></div></div>
-
-<div id="tab-permisos" class="hidden">
-<div class="box">
-<h2>🔐 Permisos</h2>
-<div id="permStores"></div>
-<div id="permUsers"></div>
-<div id="permModules"></div>
-</div></div>
 <script>
-const $=id=>document.getElementById(id);let DATA={diarios:{},satelite:{},mensuales:{},anomalias:{}},selected='GLOBAL',currentTab='panel';
+const $=id=>document.getElementById(id);let DATA={diarios:{},satelite:{},mensuales:{},anomalias:{},permisos:{}},selected='GLOBAL',currentTab='panel';
 const money=v=>Number(v||0).toLocaleString('es-MX',{style:'currency',currency:'MXN'}), n=v=>Number(v||0).toLocaleString('es-MX');
 function isObj(x){return x&&typeof x==='object'&&!Array.isArray(x)} function num(v){if(v==null||v==='')return 0;if(typeof v==='number')return v;return Number(String(v).replace(/[^0-9.-]/g,''))||0}
 function isoDate(s){if(!s)return'';s=String(s);let m=s.match(/(20\d{2})[-\/](\d{1,2})[-\/](\d{1,2})/);if(m)return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;m=s.match(/(\d{1,2})[-\/](\d{1,2})[-\/](20\d{2})/);if(m)return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;return''}
-function ymOf(d){return String(d||'').slice(0,7)} function get(path){let base=$('dburl').value.trim().replace(/\/+$/,'');return fetch(base+path+'.json?ts='+Date.now()).then(r=>{if(!r.ok)throw new Error(r.status+' '+r.statusText);return r.json()}).then(x=>x||{})}
+function ymOf(d){return String(d||'').slice(0,7)}
+function fbBase(){return $('dburl').value.trim().replace(/\/+$/,'')}
+function get(path){let base=fbBase();return fetch(base+path+'.json?ts='+Date.now()).then(r=>{if(!r.ok)throw new Error(r.status+' '+r.statusText);return r.json()}).then(x=>x||{})}
+function safeKey(v){return encodeURIComponent(String(v||'').replace(/[.#$\[\]]/g,'_'))}
+async function put(path,data){
+  let r=await fetch(fbBase()+path+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data||{})});
+  if(!r.ok){let t='';try{t=await r.text()}catch(_){ }throw new Error('Firebase PUT '+r.status+' '+r.statusText+' '+t)}
+  return r.json();
+}
+async function patch(path,data){
+  let r=await fetch(fbBase()+path+'.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(data||{})});
+  if(!r.ok){let t='';try{t=await r.text()}catch(_){ }throw new Error('Firebase PATCH '+r.status+' '+r.statusText+' '+t)}
+  return r.json();
+}
 function val(o,keys){for(const k of keys){if(o&&Object.prototype.hasOwnProperty.call(o,k)&&o[k]!=null&&o[k]!=='')return o[k]}return 0}
 function scan(o,regs){let t=0;if(!isObj(o))return 0;for(const [k,v] of Object.entries(o)){let kk=k.toLowerCase();if(isObj(v))continue;if(regs.some(r=>r.test(kk)))t+=num(v)}return t}
 const KEYS={ventas:['totalVentas','ventasActivas','ventasNetas','ventasDia','ventas','ventaTotal','farmaciaProductosMontoUI','farmaciaProductosMonto','farmaciaMontoUI','farmaciaMonto','farmaciaDia','serviciosMontoUI','recargasMontoUI','paqueteriaMontoUI','farmaciaPaqueteriaMontoUI'],efectivo:['efectivo','efectivoMontoUI','efectivoMonto','efectivoTotal','efectivoVentas','cash'],tarjeta:['tarjeta','tarjetaMontoUI','tarjetaMonto','tarjetaTotal','tarjetaVentas','tpv','card'],gastos:['gastosDelDia','gastosDia','gastosTotal','gastosMontoUI','gastosMonto','gastos','gastosDiaMontoUI'],costo:['costoProductoVendido','costoProductoVendidoUI','costoTotal','costoVendido','costo'],ganancia:['gananciaProducto','gananciaProductoUI','ganancia','utilidad','utilidadNeta'],descuentos:['descuentosTotal','descuentosDia','descuentosMontoUI','descuento','descuentos'],lineas:['lineas','lineasTotal','items','piezas','pzs','productos'],tickets:['tickets','ticketsTotal','ventasTickets','ticketCount','ticketsActivos']};
@@ -48,14 +54,71 @@ function state(id){let n=DATA.satelite?.[id]||{};return n.estado||n.state||n}
 function lastMs(o={}){return num(o.updatedAtMs)||num(o.lastSeenMs)||num(o.ts)||num(o.timestamp)||Date.parse(o.updatedAt||o.updatedAtLocal||o.updatedAtUTC||o.horaLocal||o.horaAperturaLocal||o.horaCierreLocal||o.fechaHora||'')||0}
 function isTodayDate(d){return isoDate(d)===today()}
 function online(o){let ms=lastMs(o);return o?.online===true||o?.connected===true||Boolean(ms&&Date.now()-ms<3*3600000)}
-function storeName(id,o={}){return o.storeName||o.nombreSucursal||o.nombre||o.name||o.sucursal||id}
+function cleanStoreName(v){
+  v=(v==null?'':String(v)).trim();
+  if(!v||v==='undefined'||v==='null')return '';
+  return v.replace(/\s+/g,' ');
+}
+function nameSpecificScore(v){
+  v=cleanStoreName(v);
+  if(!v)return -999;
+  let up=v.toUpperCase();
+  let score=Math.min(v.length,60);
+  if(up==='FARMABIEN'||up==='FARMACIA'||up==='MACROXEL')score-=35;
+  if(/GARDENIAS|LOMAS|BIENESTAR|CONSULTORIO|SUCURSAL|HGAM|PADIERNA|FARMABIEN\s+\w+/i.test(v))score+=25;
+  return score;
+}
+function pushStoreNameCandidate(arr,id,o,prio){
+  if(!isObj(o))return;
+  let nm=cleanStoreName(o.storeName||o.nombreSucursal||o.nombreTienda||o.nombreFarmacia||o.nombre||o.name||o.sucursal||o.branchName||o.displayName);
+  if(!nm||nm===id)return;
+  arr.push({name:nm,score:prio+nameSpecificScore(nm),ms:lastMs(o)});
+}
+function storeName(id,o={}){
+  let arr=[];
+  pushStoreNameCandidate(arr,id,o,60);
+  pushStoreNameCandidate(arr,id,state(id),45);
+  let sat=DATA.satelite?.[id]||{};
+  pushStoreNameCandidate(arr,id,sat.estado||sat.state||sat,45);
+  if(isObj(sat.eventos)){
+    Object.values(sat.eventos).forEach(day=>{if(isObj(day))Object.values(day).forEach(ev=>pushStoreNameCandidate(arr,id,ev,35));});
+  }
+  let p=DATA.permisos?.[id]||{};
+  pushStoreNameCandidate(arr,id,p.meta,90);
+  pushStoreNameCandidate(arr,id,p,70);
+  let m=DATA.mensuales?.[id]||{};
+  pushStoreNameCandidate(arr,id,m.meta,85);
+  Object.entries(m).forEach(([k,v])=>{
+    if(k==='meta')return;
+    pushStoreNameCandidate(arr,id,v.meta||v,65);
+    if(isObj(v?.days))Object.values(v.days).forEach(day=>{if(isObj(day))Object.values(day).forEach(r=>pushStoreNameCandidate(arr,id,r,75));});
+  });
+  flattenDaily().filter(r=>r.storeId===id).forEach(r=>pushStoreNameCandidate(arr,id,r,80));
+  if(!arr.length)return id;
+  arr.sort((a,b)=>(b.score-a.score)||(b.ms-a.ms));
+  return arr[0].name;
+}
 function latestDailyByStore(id){let rows=flattenDaily().filter(r=>r.storeId===id);rows.sort((a,b)=>lastMs(b)||Date.parse(b.date||'')-(lastMs(a)||Date.parse(a.date||'')));return rows[0]||{}}
 function activeFromFirebase(id,o={}){let st=state(id);if(online(st)||online(o))return true;let d=latestDailyByStore(id);let ms=lastMs(d);return Boolean(ms&&Date.now()-ms<3*3600000)}
-function allStores(){let s={};for(const [id,o] of Object.entries(DATA.satelite||{}))s[id]={...(o.estado||o.state||o),_id:id};for(const r of flattenDaily()){let prev=s[r.storeId]||{};let prevMs=lastMs(prev), rMs=lastMs(r);s[r.storeId]={...prev,...r,_id:r.storeId,_hasDaily:true,_lastMs:Math.max(prevMs,rMs)}}for(const r of flattenMonth())s[r.storeId]={...(s[r.storeId]||{}),...r,_id:r.storeId,_hasMonth:true};return s}
+function allStores(){let s={};for(const [id,o] of Object.entries(DATA.satelite||{}))s[id]={...(o.estado||o.state||o),_id:id,_hasSat:true};for(const r of flattenDaily()){let prev=s[r.storeId]||{};let prevMs=lastMs(prev), rMs=lastMs(r);s[r.storeId]={...prev,...r,_id:r.storeId,_hasDaily:true,_lastMs:Math.max(prevMs,rMs)}}for(const r of flattenMonth())s[r.storeId]={...(s[r.storeId]||{}),...r,_id:r.storeId,_hasMonth:true};return s}
+function normStoreName(n){return String(n||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim()}
+function storeScore(id,o){let ms=Math.max(lastMs(o)||0,lastMs(state(id))||0,o._lastMs||0);let active=activeFromFirebase(id,o)?1:0;let data=(o._hasDaily?1:0)+(o._hasMonth?1:0);let users=usuariosPermisoSafe(id).length;return data*10000000000000+active*1000000000000+Math.min(ms,999999999999)+users}
+function realStores(){
+  let all=allStores(), best={};
+  Object.entries(all).forEach(([id,o])=>{
+    if(!id||id==='undefined'||id==='null')return;
+    let hasData=o._hasDaily||o._hasMonth||activeFromFirebase(id,o);
+    if(!hasData)return;
+    let nm=normStoreName(storeName(id,o));
+    if(!nm||nm===normStoreName(id))nm=id;
+    if(!best[nm]||storeScore(id,o)>storeScore(best[nm].id,best[nm].o))best[nm]={id,o};
+  });
+  let out={};Object.values(best).forEach(x=>out[x.id]=x.o);return out;
+}
 function rowsFor(id){let f=$('fecha').value,u=$('usuario').value;return flattenDaily().filter(r=>(id==='GLOBAL'||r.storeId===id)&&r.date===f&&(u==='__ALL__'||r.user===u))}
 function availableDates(){return [...new Set(flattenDaily().map(r=>r.date).filter(Boolean))].sort()}function ensureDate(){let d=availableDates();if(d.length&&!d.includes($('fecha').value))$('fecha').value=d[d.length-1]}
 function renderSelectors(){let users=[...new Set(flattenDaily().filter(r=>r.date===$('fecha').value).map(r=>r.user))].sort();let cur=$('usuario').value;$('usuario').innerHTML='<option value="__ALL__">(todos)</option>'+users.map(u=>`<option>${u}</option>`).join('');$('usuario').value=users.includes(cur)?cur:'__ALL__'}
-function renderStores(){let box=$('stores');box.innerHTML='';let mk=(id,label,sub)=>{let d=document.createElement('div');d.className='store '+(selected===id?'active':'');d.innerHTML=`<b>${label}</b><small>${sub}</small>`;d.onclick=()=>{selected=id;render()};box.appendChild(d)};mk('GLOBAL','🌎 GLOBAL','Todas las sucursales');for(const [id,o] of Object.entries(allStores()))mk(id,storeName(id,o),`${id} · ${activeFromFirebase(id,o)?'🟢 activo':'🔴 sin señal'} · 📊 datos Firebase`)}
+function renderStores(){let box=$('stores');box.innerHTML='';let mk=(id,label,sub)=>{let d=document.createElement('div');d.className='store '+(selected===id?'active':'');d.innerHTML=`<b>${label}</b><small>${sub}</small>`;d.onclick=()=>{selected=id;render()};box.appendChild(d)};mk('GLOBAL','🌎 GLOBAL','Todas las sucursales');for(const [id,o] of Object.entries(realStores()))mk(id,storeName(id,o),`${id} · ${activeFromFirebase(id,o)?'🟢 activo':'🔴 sin señal'} · 📊 datos Firebase`)}
 function card(l,v,h){return `<div class="card"><div class="label">${l}</div><div class="value">${v}</div><div class="hint">${h||''}</div></div>`}
 function renderPanel(){let rows=rowsFor(selected),s=sum(rows),stores=allStores();$('title').textContent=selected==='GLOBAL'?'🌎 GLOBAL (todas las sucursales)':'🏪 '+storeName(selected,stores[selected]||{});$('subtitle').textContent=`Fecha: ${$('fecha').value} · Usuario: ${$('usuario').value==='__ALL__'?'todos':$('usuario').value}`;$('resumeLine').textContent=`Líneas: ${n(s.lineas)} · Tickets: ${n(s.tickets)} · Canceladas: ${n(s.cancelTickets)} (${money(s.cancelTotal)}) · Costo: ${money(s.costo)} · Ganancia: ${money(s.ganancia)} · Fecha: ${$('fecha').value}`;let cards=[];cards.push(card('Total ventas',money(s.ventas),'Ventas tomadas de Firebase'));if(s.efectivo||rows.some(r=>has(r,'efectivo')))cards.push(card('Efectivo',money(s.efectivo),'Solo ventas activas'));if(s.tarjeta||rows.some(r=>has(r,'tarjeta')))cards.push(card('Tarjeta',money(s.tarjeta),'Solo ventas activas'));if(s.efectivo||s.gastos)cards.push(card('Efectivo neto',money(s.efectivoNeto),'Efectivo - gastos del día'));if(s.costo||rows.some(r=>has(r,'costo')))cards.push(card('Costo de producto vendido',money(s.costo),'Desde Firebase'));if(s.ganancia||rows.some(r=>has(r,'ganancia')))cards.push(card('Ganancia de producto',money(s.ganancia),'Ventas - costo'));if(s.gastos||rows.some(r=>has(r,'gastos')))cards.push(card('Gastos del día',money(s.gastos),'Gastos registrados'));if(s.cancelTotal||s.cancelTickets)cards.push(card('Canceladas',money(s.cancelTotal),`${n(s.cancelTickets)} ticket(s) · ${n(s.cancelLineas)} línea(s)`));if(s.descuentos||rows.some(r=>has(r,'descuentos')))cards.push(card('Descuentos del día',money(s.descuentos),'Descuentos guardados'));$('cards').innerHTML=cards.join('')||'<div class="bar">Sin datos para esta fecha.</div>';let by={};for(const r of rows){by[r.user]=by[r.user]||[];by[r.user].push(r)};let cols=[['Usuario',x=>x.u],['Ventas',x=>money(x.s.ventas)],['Efectivo',x=>money(x.s.efectivo)],['Tarjeta',x=>money(x.s.tarjeta)],['Gastos',x=>money(x.s.gastos)],['Costo',x=>money(x.s.costo)],['Ganancia',x=>money(x.s.ganancia)],['Canceladas',x=>n(x.s.cancelTickets)],['Cancelado $',x=>money(x.s.cancelTotal)]];$('userTable').innerHTML='<thead><tr>'+cols.map(c=>`<th>${c[0]}</th>`).join('')+'</tr></thead><tbody>'+ (Object.entries(by).map(([u,rs])=>{let x={u,s:sum(rs)};return '<tr>'+cols.map(c=>`<td>${c[1](x)}</td>`).join('')+'</tr>'}).join('')||`<tr><td colspan="${cols.length}">Sin reportes del día para esta selección</td></tr>` )+'</tbody>'}
 function eventMs(e,k){
@@ -220,57 +283,85 @@ function renderCharts(){
     chartBars('Tickets del día', rows.sort((a,b)=>b.tickets-a.tickets), 'tickets', v=>n(v), 'Sin tickets del día.');
 }
 
+
+const MODULOS_DEF=[
+  {id:'dashboard',label:'Dashboard',aliases:['dashboard']},
+  {id:'inventario',label:'Inventario',aliases:['inventario']},
+  {id:'conteo',label:'Conteo inventario',aliases:['conteo','conteoInventario','conteoinventario']},
+  {id:'entradas',label:'Entradas',aliases:['entradas']},
+  {id:'salidas',label:'Salidas',aliases:['salidas']},
+  {id:'ventas',label:'Ventas',aliases:['ventas']},
+  {id:'factura',label:'Factura',aliases:['factura']},
+  {id:'resumenDia',label:'Resumen día',aliases:['resumenDia','resumendia','resumen_dia']},
+  {id:'resurtido',label:'Resurtido',aliases:['resurtido']},
+  {id:'monedero_mod',label:'Monedero',aliases:['monedero_mod','monedero']},
+  {id:'libroantibiotico',label:'Libro antibióticos',aliases:['libroantibiotico','libroAntibioticos','libroantibioticos','antibioticos']},
+  {id:'aware',label:'AWARE',aliases:['aware','enara']},
+  {id:'gastos',label:'Gastos',aliases:['gastos']},
+  {id:'baseglobal',label:'Base global',aliases:['baseglobal','baseGlobal','base_global']},
+  {id:'cortes',label:'Cortes',aliases:['cortes','corte']},
+  {id:'efectivo',label:'Conteo efectivo',aliases:['efectivo','conteoEfectivo','conteo_efectivo']},
+  {id:'medicos',label:'Médicos',aliases:['medicos','médicos']},
+  {id:'proveedores',label:'Proveedores',aliases:['proveedores']},
+  {id:'usuarios',label:'Usuarios',aliases:['usuarios']},
+  {id:'requisitos',label:'Requisitos',aliases:['requisitos']},
+  {id:'temperaturas',label:'Temperaturas',aliases:['temperaturas','temperatura']},
+  {id:'limpieza',label:'Bitácora limpieza',aliases:['limpieza','bitacora','bitacoraLimpieza','bitácora limpieza']},
+  {id:'configuracion',label:'Configuración',aliases:['configuracion','configuración']},
+  {id:'kardex',label:'Kardex',aliases:['kardex','movimientos']},
+  {id:'destruccion',label:'Destrucción',aliases:['destruccion','destrucción']},
+  {id:'anomalias',label:'Anomalías',aliases:['anomalias','anomalías']},
+  {id:'reportes',label:'Reportes',aliases:['reportes']}
+];
+const MODULOS_BASE=MODULOS_DEF.map(x=>x.id);
+const MODULOS_LABELS=Object.fromEntries(MODULOS_DEF.map(x=>[x.id,x.label]));
+function niceModulo(m){return MODULOS_LABELS[m]||String(m).replace(/_/g,' ').replace(/^\w/,c=>c.toUpperCase())}
+function usuariosPermisoSafe(sid){let p=(DATA.permisos||{})[sid]||{}, names=new Set();Object.keys(p.__users||{}).forEach(u=>names.add(u));Object.keys(p).forEach(k=>{if(!k.startsWith('__')&&k!=='meta') names.add(k)});return [...names].filter(Boolean).sort((a,b)=>a.localeCompare(b,'es'))}
+function permisosStores(){return {...realStores()}}
+function usuariosPermiso(sid){return usuariosPermisoSafe(sid)}
+function readModuleValue(raw,def){for(const k of def.aliases){if(raw&&Object.prototype.hasOwnProperty.call(raw,k))return !!raw[k]}return false}
+function modulesFor(sid,user){let p=(DATA.permisos||{})[sid]||{}, u=p[user]||{}, raw=(u&&u.modules)||{}, base={};MODULOS_DEF.forEach(d=>base[d.id]=readModuleValue(raw,d));return base}
+function renderPermisos(){
+  let stores=permisosStores(), ids=Object.keys(stores).sort((a,b)=>storeName(a,stores[a]).localeCompare(storeName(b,stores[b]),'es'));
+  $('permStatus').textContent=ids.length+' sucursal(es)';
+  $('permPanel').innerHTML=ids.map(sid=>{let users=usuariosPermiso(sid);if(!users.length) users=['admin'];return `<div class="permStore"><div class="permHead"><div><b>${storeName(sid,stores[sid])}</b><br><small>${sid}</small></div><span class="small">${users.length} usuario(s)</span></div>${users.map(u=>renderPermUser(sid,u)).join('')}</div>`}).join('')||'<div class="bar">No hay permisos guardados en Firebase.</div>';
+}
+function renderPermUser(sid,u){
+  let mods=modulesFor(sid,u);
+  let keys=MODULOS_BASE.filter(k=>Object.prototype.hasOwnProperty.call(mods,k));
+  let activos=keys.filter(m=>mods[m]).length, ocultos=keys.length-activos;
+  let inputs=keys.map(m=>`<label class="permItem"><span>${niceModulo(m)}</span><input type="checkbox" data-sid="${sid}" data-user="${u}" data-mod="${m}" ${mods[m]?'checked':''}></label>`).join('');
+  return `<div class="permUser" data-sid="${sid}" data-user="${u}">
+    <button class="permUserBtn" type="button" onclick="togglePermUser(this)">
+      <span><b>👤 ${u}</b><small>${activos} activo(s) · ${ocultos} oculto(s)</small></span>
+      <span class="permArrow">›</span>
+    </button>
+    <div class="permBody">
+      <div class="permGrid">${inputs}</div>
+      <div class="permActions"><button class="miniBtn" onclick="permAll('${sid}','${u}',true)">Mostrar todos</button><button class="miniBtn" onclick="permAll('${sid}','${u}',false)">Ocultar todos</button><button class="saveBtn" onclick="savePerm('${sid}','${u}')">Guardar permisos</button><span class="permMsg" id="msg-${sid}-${u}"></span></div>
+    </div>
+  </div>`
+}
+function togglePermUser(btn){
+  let box=btn.closest('.permUser');
+  if(!box)return;
+  box.classList.toggle('open');
+}
+function permAll(sid,u,val){document.querySelectorAll(`input[data-sid="${sid}"][data-user="${u}"]`).forEach(x=>x.checked=val)}
+async function savePerm(sid,u){
+  let mods={};
+  document.querySelectorAll(`input[data-sid="${sid}"][data-user="${u}"]`).forEach(x=>{
+    let def=MODULOS_DEF.find(d=>d.id===x.dataset.mod); if(!def)return;
+    def.aliases.forEach(a=>mods[a]=x.checked);
+    mods[def.id]=x.checked;
+  });
+  let msg=$(`msg-${sid}-${u}`);
+  try{if(msg)msg.textContent='Guardando...';await patch('/permisos/'+safeKey(sid)+'/'+safeKey(u),{modules:mods,storeId:sid,user:u,updatedAt:new Date().toISOString(),updatedBy:'MONITOR'});await patch('/permisos/'+safeKey(sid)+'/__users/'+safeKey(u),{username:u,display:u,updatedAt:new Date().toISOString(),updatedBy:'MONITOR'});DATA.permisos=await get('/permisos');if(msg)msg.textContent='✅ Guardado en Firebase'}catch(e){console.error(e);if(msg)msg.textContent='❌ Error al guardar: '+(e.message||e)}
+}
+
 function labels(){document.querySelectorAll('table').forEach(t=>{let hs=[...t.querySelectorAll('thead th')].map(x=>x.textContent);t.querySelectorAll('tbody tr').forEach(tr=>[...tr.children].forEach((td,i)=>td.setAttribute('data-label',hs[i]||'')))})}
-function render(){renderPermisos();renderSelectors();renderStores();renderPanel();renderTables();renderAnom();renderCharts();labels()}
+function render(){renderSelectors();renderStores();renderPanel();renderTables();renderAnom();renderCharts();renderPermisos();labels()}
 async function refresh(){try{$('status2').textContent='Consultando';$('dot2').className='dot warn';DATA.diarios=await get('/reportes_diarios');DATA.satelite=await get('/satelite');DATA.mensuales=await get('/reportes_mensuales');DATA.permisos=await get('/permisos');let a1=await get('/anom_alerts');let a2=await get('/anomalias');DATA.anomalias={__anom_alerts:a1,__anomalias:a2};ensureDate();$('status2').textContent='Conectado';$('dot2').className='dot ok';$('updated').textContent='Última actualización: '+new Date().toLocaleString('es-MX');render()}catch(e){$('status2').textContent='Sin conexión';$('dot2').className='dot';console.error(e)}}
-function setTab(n){currentTab=n;
-function renderPermisos(){
- let root=DATA.permisos||{};
- let hs='<div class="section">Sucursales</div>';
- Object.keys(root||{}).forEach(s=>{hs+=`<div class="store" onclick="selectStorePerm('${s}')"><b>${s}</b></div>`});
- $('permStores')&&($('permStores').innerHTML=hs);
-}
-let permStore='',permUser='';
-function selectStorePerm(s){
- permStore=s;
- let r=(DATA.permisos||{})[s]||{};
- let h='<div class="section">Usuarios</div>';
- Object.keys(r).forEach(u=>{if(typeof r[u]==='object')h+=`<div class="store" onclick="selectUserPerm('${u}')"><b>${u}</b></div>`});
- $('permUsers').innerHTML=h;
- $('permModules').innerHTML='';
-}
-function selectUserPerm(u){
- permUser=u;
- let mods=((DATA.permisos||{})[permStore]||{})[u]||{};
- let h='<div class="section">Módulos</div>';
- Object.keys(mods).forEach(m=>{h+=`<div class="store"><label><input type="checkbox" ${mods[m]?'checked':''}> ${m}</label></div>`});
- $('permModules').innerHTML=h;
-}
-
-document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===n));['panel','sucursales','mensual','anomalias','graficos','permisos'].forEach(k=>$('tab-'+k).classList.toggle('hidden',k!==n));document.querySelector('.layout').classList.toggle('noSide',n!=='anomalias');document.querySelector('.layout').classList.toggle('configMode',n==='anomalias');labels();window.scrollTo({top:0,behavior:'smooth'})}
-
-function renderPermisos(){
- let root=DATA.permisos||{};
- let hs='<div class="section">Sucursales</div>';
- Object.keys(root||{}).forEach(s=>{hs+=`<div class="store" onclick="selectStorePerm('${s}')"><b>${s}</b></div>`});
- $('permStores')&&($('permStores').innerHTML=hs);
-}
-let permStore='',permUser='';
-function selectStorePerm(s){
- permStore=s;
- let r=(DATA.permisos||{})[s]||{};
- let h='<div class="section">Usuarios</div>';
- Object.keys(r).forEach(u=>{if(typeof r[u]==='object')h+=`<div class="store" onclick="selectUserPerm('${u}')"><b>${u}</b></div>`});
- $('permUsers').innerHTML=h;
- $('permModules').innerHTML='';
-}
-function selectUserPerm(u){
- permUser=u;
- let mods=((DATA.permisos||{})[permStore]||{})[u]||{};
- let h='<div class="section">Módulos</div>';
- Object.keys(mods).forEach(m=>{h+=`<div class="store"><label><input type="checkbox" ${mods[m]?'checked':''}> ${m}</label></div>`});
- $('permModules').innerHTML=h;
-}
-
+function setTab(n){currentTab=n;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===n));['panel','sucursales','mensual','anomalias','graficos','permisos'].forEach(k=>$('tab-'+k).classList.toggle('hidden',k!==n));document.querySelector('.layout').classList.toggle('noSide',!((n==='anomalias'||n==='permisos')||n==='permisos'));document.querySelector('.layout').classList.toggle('configMode',(n==='anomalias'||n==='permisos'));labels();window.scrollTo({top:0,behavior:'smooth'})}
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>setTab(t.dataset.tab));document.querySelectorAll('.homeCard').forEach(c=>c.onclick=()=>{document.body.classList.add('mobileViewing');setTab(c.dataset.go)});$('mobileBack').onclick=()=>{document.body.classList.remove('mobileViewing');window.scrollTo({top:0,behavior:'smooth'})};$('fecha').onchange=()=>{render();};$('usuario').onchange=render;$('fecha').value=new Date().toISOString().slice(0,10);setTab('panel');refresh();
 </script></body></html>
