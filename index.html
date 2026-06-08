@@ -13,14 +13,14 @@
 <div class="home"><div class="homeCard" data-go="panel"><div class="homeIcon">📊</div><div class="homeTitle">Resumen día</div><div class="homeSub">Ventas y gastos</div></div><div class="homeCard" data-go="sucursales"><div class="homeIcon">🏪</div><div class="homeTitle">Sucursales</div><div class="homeSub">Jornada y estado</div></div><div class="homeCard" data-go="mensual"><div class="homeIcon">📅</div><div class="homeTitle">Mensual</div><div class="homeSub">Resultado del mes</div></div><div class="homeCard" data-go="anomalias"><div class="homeIcon">⚠️</div><div class="homeTitle">Anomalias</div><div class="homeSub">Alertas guardadas</div></div><div class="homeCard" data-go="graficos"><div class="homeIcon">📈</div><div class="homeTitle">Gráficos</div><div class="homeSub">Comparativa tiendas</div></div><div class="homeCard" data-go="permisos"><div class="homeIcon">🔐</div><div class="homeTitle">Permisos</div><div class="homeSub">Módulos por vendedor</div></div><div class="homeCard" data-go="config"><div class="homeIcon">⚙️</div><div class="homeTitle">Configuración</div><div class="homeSub">Fecha, usuario y sucursal</div></div></div>
 <button id="mobileBack" class="mobileBack">⬅️ Menú principal</button>
 <div class="tabs"><button class="tab active" data-tab="panel">📊 Resumen día</button><button class="tab" data-tab="sucursales">🏪 Sucursales</button><button class="tab" data-tab="mensual">📅 Mensual</button><button class="tab" data-tab="anomalias">⚠️ Anomalias</button><button class="tab" data-tab="graficos">📈 Gráficos</button><button class="tab" data-tab="permisos">🔐 Permisos</button><button class="tab" data-tab="config">⚙️ Configuración</button></div>
-<input id="dburl" type="hidden" value="https://registrodedatosfirebase-default-rtdb.firebaseio.com"><div class="layout"><aside class="box" id="configBox"><div class="section" style="margin-top:0">⚙️ Configuración</div><div class="field"><label>Fecha</label><input id="fecha" type="date"></div><div class="field"><label>Usuario</label><select id="usuario"><option value="__ALL__">(todos)</option></select></div><div id="stores" style="margin-top:14px"></div></aside><main>
+<div class="layout"><aside class="box" id="configBox"><div class="section" style="margin-top:0">⚙️ Configuración</div><div class="field"><label>URL Firebase Realtime Database</label><input id="dburl" type="url" placeholder="https://tu-proyecto.firebaseio.com" value="https://registrodedatosfirebase-default-rtdb.firebaseio.com"></div><div class="field"><button id="saveDbUrl" class="primary" type="button">💾 Guardar URL</button><div id="dbUrlMsg" class="small" style="margin-top:7px;font-weight:900"></div></div><div class="field"><label>Fecha</label><input id="fecha" type="date"></div><div class="field"><label>Usuario</label><select id="usuario"><option value="__ALL__">(todos)</option></select></div><div id="stores" style="margin-top:14px"></div></aside><main>
 <section id="tab-panel" class="box"><div class="head"><div><h2 id="title">GLOBAL</h2><div id="subtitle" class="small"></div></div><div id="updated" class="updated">—</div></div><div id="resumeLine" class="bar"></div><div class="section">📌 Resumen principal</div><div id="cards" class="grid"></div><div class="section">Detalle por usuario</div><table id="userTable"></table></section>
 <section id="tab-sucursales" class="box hidden"><div class="head"><h2>🏪 Sucursales</h2><div id="storeCount" class="updated">0</div></div><table id="storeTable"></table></section>
 <section id="tab-mensual" class="box hidden"><div class="head"><h2>📅 Reporte mensual</h2><div class="updated" id="monthLabel">—</div></div><table id="monthTable"></table></section>
 <section id="tab-anomalias" class="box hidden"><div class="head"><h2>⚠️ Anomalias</h2><div class="updated" id="anomCount">0</div></div><table id="anomTable"></table></section>
 <section id="tab-graficos" class="box hidden"><div class="head"><h2>📈 Gráficos de tiendas</h2><div class="updated" id="graphLabel">—</div></div><div class="bar">Comparativa tomada directo de Firebase para detectar rendimiento, gastos, cancelaciones, anomalías y horas operativas.</div><div id="graphHealth" class="health"></div><div class="section">Comparativas principales</div><div id="graphGrid" class="chartGrid"></div></section>
 <section id="tab-permisos" class="box hidden"><div class="head"><h2>🔐 Permisos vendedores</h2><div class="updated" id="permStatus">Firebase</div></div><div class="bar">Activa o desactiva módulos por vendedor. Se guarda directo en Firebase en <b>/permisos/{sucursal}/{usuario}/modules</b>.</div><div id="permPanel"></div></section>
-<section id="tab-config" class="box hidden"><div class="head"><h2>⚙️ Configuración</h2><div class="updated">Monitor</div></div><div class="bar">Configura la fecha, usuario y sucursal desde el panel lateral. Los cambios actualizan el monitor con la información guardada en Firebase.</div></section>
+<section id="tab-config" class="box hidden"><div class="head"><h2>⚙️ Configuración</h2><div class="updated">Monitor</div></div><div class="bar">Configura la URL de Firebase, fecha, usuario y sucursal desde el panel lateral. Al guardar la URL, el monitor la conserva en este equipo y vuelve a consultar Firebase con esa conexión.</div></section>
 </main></div></div>
 <script>
 const $=id=>document.getElementById(id);let DATA={diarios:{},satelite:{},mensuales:{},anomalias:{},permisos:{}},selected='GLOBAL',currentTab='panel';
@@ -29,6 +29,23 @@ function isObj(x){return x&&typeof x==='object'&&!Array.isArray(x)} function num
 function isoDate(s){if(!s)return'';s=String(s);let m=s.match(/(20\d{2})[-\/](\d{1,2})[-\/](\d{1,2})/);if(m)return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;m=s.match(/(\d{1,2})[-\/](\d{1,2})[-\/](20\d{2})/);if(m)return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;return''}
 function ymOf(d){return String(d||'').slice(0,7)}
 function fbBase(){return $('dburl').value.trim().replace(/\/+$/,'')}
+function loadDbUrl(){
+  let saved=localStorage.getItem('MACROXEL_MONITOR_FIREBASE_URL');
+  if(saved) $('dburl').value=saved;
+}
+function saveDbUrl(){
+  let url=$('dburl').value.trim().replace(/\/+$/,'');
+  let msg=$('dbUrlMsg');
+  if(!url){ if(msg)msg.textContent='❌ Escribe una URL válida.'; return; }
+  if(!/^https:\/\/.+firebaseio\.com$|^https:\/\/.+firebasedatabase\.app$/.test(url)){
+    if(msg)msg.textContent='⚠️ Revisa la URL. Debe ser Firebase Realtime Database.';
+    return;
+  }
+  $('dburl').value=url;
+  localStorage.setItem('MACROXEL_MONITOR_FIREBASE_URL',url);
+  if(msg)msg.textContent='✅ URL guardada. Reconectando...';
+  refresh();
+}
 function get(path){let base=fbBase();return fetch(base+path+'.json?ts='+Date.now()).then(r=>{if(!r.ok)throw new Error(r.status+' '+r.statusText);return r.json()}).then(x=>x||{})}
 function safeKey(v){return encodeURIComponent(String(v||'').replace(/[.#$\[\]]/g,'_'))}
 async function put(path,data){
@@ -365,5 +382,5 @@ function labels(){document.querySelectorAll('table').forEach(t=>{let hs=[...t.qu
 function render(){renderSelectors();renderStores();renderPanel();renderTables();renderAnom();renderCharts();renderPermisos();labels()}
 async function refresh(){try{$('status2').textContent='Consultando';$('dot2').className='dot warn';DATA.diarios=await get('/reportes_diarios');DATA.satelite=await get('/satelite');DATA.mensuales=await get('/reportes_mensuales');DATA.permisos=await get('/permisos');let a1=await get('/anom_alerts');let a2=await get('/anomalias');DATA.anomalias={__anom_alerts:a1,__anomalias:a2};ensureDate();$('status2').textContent='Conectado';$('dot2').className='dot ok';$('updated').textContent='Última actualización: '+new Date().toLocaleString('es-MX');render()}catch(e){$('status2').textContent='Sin conexión';$('dot2').className='dot';console.error(e)}}
 function setTab(n){currentTab=n;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===n));['panel','sucursales','mensual','anomalias','graficos','permisos','config'].forEach(k=>$('tab-'+k).classList.toggle('hidden',k!==n));document.querySelector('.layout').classList.toggle('noSide',n!=='config');document.querySelector('.layout').classList.toggle('configMode',n==='config');labels();window.scrollTo({top:0,behavior:'smooth'})}
-document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>setTab(t.dataset.tab));document.querySelectorAll('.homeCard').forEach(c=>c.onclick=()=>{document.body.classList.add('mobileViewing');setTab(c.dataset.go)});$('mobileBack').onclick=()=>{document.body.classList.remove('mobileViewing');window.scrollTo({top:0,behavior:'smooth'})};$('fecha').onchange=()=>{render();};$('usuario').onchange=render;$('fecha').value=new Date().toISOString().slice(0,10);setTab('panel');refresh();
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>setTab(t.dataset.tab));document.querySelectorAll('.homeCard').forEach(c=>c.onclick=()=>{document.body.classList.add('mobileViewing');setTab(c.dataset.go)});$('mobileBack').onclick=()=>{document.body.classList.remove('mobileViewing');window.scrollTo({top:0,behavior:'smooth'})};$('fecha').onchange=()=>{render();};$('usuario').onchange=render;$('saveDbUrl').onclick=saveDbUrl;loadDbUrl();$('fecha').value=new Date().toISOString().slice(0,10);setTab('panel');refresh();
 </script></body></html>
