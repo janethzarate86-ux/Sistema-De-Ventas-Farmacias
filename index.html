@@ -1,428 +1,192 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Macroxel — Monitor De Ventas Farmacias R612</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Macroxel — Monitor de Ventas</title>
 <style>
-:root{--bg:#eaf8ff;--card:#fff;--ink:#073459;--mut:#63809a;--edge:#b9ddf3;--blue:#1689f7;--green:#19c978;--red:#e84662;--shadow:0 12px 28px rgba(38,94,130,.14)}*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#eaf8ff,#f9fdff);font-family:Arial,Helvetica,sans-serif;color:var(--ink)}.top,.wrap{max-width:1120px;margin:auto}.top{padding:18px 14px 5px}.topLine{display:flex;align-items:center;justify-content:space-between;gap:10px}.top h1{margin:0;font-size:25px}.topStatus{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--edge);background:#ffffffcc;border-radius:999px;padding:5px 9px;font-size:11px;color:var(--mut);font-weight:800}.topStatus .dot{width:9px;height:9px;box-shadow:0 0 7px currentColor}.top p{display:none}.wrap{padding:12px 14px 30px}.home{display:none}.tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:8px 0 16px}.tab,.homeCard,button,input,select{font-weight:900;color:var(--ink)}.tab{border:1px solid var(--edge);background:#fff;border-radius:20px;padding:16px 10px;box-shadow:var(--shadow);cursor:pointer}.tab.active{background:#dff4ff;border-color:#54bdf5}.layout{display:grid;grid-template-columns:315px 1fr;gap:14px}.layout.noSide{grid-template-columns:1fr}.layout.noSide aside{display:none}.box{background:#ffffffd9;border:1px solid var(--edge);border-radius:22px;box-shadow:var(--shadow);padding:14px}label{font-size:12px;color:var(--mut);display:block;margin-bottom:5px}input,select{width:100%;border:1px solid var(--edge);border-radius:15px;padding:12px;background:#f8fdff}.primary{width:100%;border:0;border-radius:15px;padding:13px;background:linear-gradient(180deg,#31a4ff,#1376e9);color:#fff}.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field{margin-bottom:10px}.pill{display:inline-flex;gap:8px;align-items:center;background:#f7fcff;border:1px solid var(--edge);border-radius:999px;padding:8px 12px;margin:8px 0}.dot{width:12px;height:12px;border-radius:50%;background:var(--red);box-shadow:0 0 12px var(--red)}.dot.ok{background:var(--green);box-shadow:0 0 12px var(--green)}.dot.warn{background:#ffc247;box-shadow:0 0 12px #ffc247}.small{font-size:12px;color:var(--mut)}.store{background:#f7fcff;border:1px solid var(--edge);border-radius:18px;padding:12px;margin:9px 0;cursor:pointer}.store.active{background:#dcf3ff;border-color:#38aaf6}.store b{display:block}.store small{color:#7c9bb6}.head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.head h2{margin:0;font-size:24px}.updated{border:1px solid var(--edge);background:#f5fbff;border-radius:999px;padding:8px 12px;color:var(--mut);font-size:12px}.bar{margin:12px 0;padding:12px 14px;border:1px solid var(--edge);background:#f7fcff;border-radius:18px;font-weight:900}.section{font-size:20px;font-weight:900;margin:18px 0 10px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.card{background:linear-gradient(180deg,#fff,#f4fbff);border:1px solid var(--edge);border-radius:28px;min-height:125px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:12px;box-shadow:var(--shadow)}.label{font-size:13px;font-weight:900;text-transform:uppercase}.value{font-size:28px;font-weight:900;margin:10px 0 4px}.hint{font-size:12px;color:var(--mut)}table{width:100%;border-collapse:collapse;background:#f7fcff;border-radius:16px;overflow:hidden}.chartGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.chartBox{background:#f7fcff;border:1px solid var(--edge);border-radius:22px;padding:14px;box-shadow:var(--shadow)}.chartTitle{font-size:16px;font-weight:900;margin:0 0 10px}.bars{display:flex;flex-direction:column;gap:9px}.barRow{display:grid;grid-template-columns:1fr 90px;gap:6px 10px;align-items:center;font-size:12px;margin-bottom:8px}.barName{grid-column:1/3;font-weight:900;overflow:visible;text-overflow:clip;white-space:normal;line-height:1.15}.barTrack{grid-column:1/2;height:18px;border-radius:999px;background:#dceffb;overflow:hidden}.barFill{height:100%;border-radius:999px;background:linear-gradient(90deg,#1689f7,#19c978);min-width:2px}.barVal{grid-column:2/3;text-align:right;font-weight:900}.health{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.healthCard{border:1px solid var(--edge);border-radius:18px;background:#fff;padding:12px}.healthCard b{display:block;font-size:13px}.healthCard span{display:block;font-size:24px;font-weight:900;margin-top:7px}.permHead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:10px 0}.permStore{border:1px solid var(--edge);background:#f7fcff;border-radius:20px;padding:12px;margin:12px 0}.permUser{border:1px solid #d4ecfb;background:#fff;border-radius:18px;padding:12px;margin:10px 0}.permUser h3{margin:0;font-size:18px}.permUser{padding:0;overflow:hidden}.permUserBtn{width:100%;border:0;background:#fff;color:var(--ink);padding:15px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;cursor:pointer}.permUserBtn b{font-size:18px}.permUserBtn small{display:block;color:var(--mut);margin-top:3px}.permArrow{font-size:18px;transition:.18s}.permUser.open .permArrow{transform:rotate(90deg)}.permBody{display:none;border-top:1px solid #d4ecfb;padding:12px}.permUser.open .permBody{display:block}.permGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.permItem{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid var(--edge);border-radius:14px;background:#f8fdff;padding:10px;font-size:12px;font-weight:900}.permItem input{width:auto}.permActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.miniBtn{border:1px solid var(--edge);border-radius:14px;background:#fff;padding:10px 12px;font-weight:900;color:var(--ink)}.saveBtn{border:0;border-radius:14px;background:linear-gradient(180deg,#31a4ff,#1376e9);color:#fff;padding:11px 14px;font-weight:900}.permMsg{font-size:12px;color:var(--mut);font-weight:900;margin-left:auto}.badgeGood{color:var(--green)}.badgeWarn{color:#d99000}.badgeBad{color:var(--red)}th{background:#dff2ff;text-align:left;font-size:12px}td,th{padding:10px;border-bottom:1px solid #d4ecfb;vertical-align:top}.hidden{display:none!important}.mobileBack,.satBox{display:none}
-@media(max-width:760px){.top{padding:14px 12px 0}.top h1{font-size:18px}.topLine{align-items:flex-start}.topStatus{font-size:10px;padding:4px 8px;white-space:nowrap}.tabs{display:none}.wrap{padding:10px}.satBox{display:none!important}.satIcon{font-size:36px;background:#f3fbff;border:1px solid var(--edge);border-radius:22px;padding:12px;position:relative}.satIcon .dot{position:absolute;right:5px;bottom:7px}.home{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;min-height:calc(100vh - 160px)}.homeCard{background:linear-gradient(180deg,#fff,#edf9ff);border:1px solid var(--edge);box-shadow:var(--shadow);border-radius:28px;min-height:190px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 10px}.homeIcon{font-size:54px}.homeTitle{font-size:22px;font-weight:900;margin:18px 0 10px}.homeSub{font-size:14px;color:var(--mut);font-weight:800}body:not(.mobileViewing) .layout{display:none!important}body.mobileViewing .home{display:none!important}body.mobileViewing .layout{display:block!important}.mobileViewing aside{display:none!important}.mobileViewing .layout.configMode aside{display:block!important;margin-bottom:14px}.mobileViewing .mobileBack{display:block;width:100%;border:1px solid var(--edge);border-radius:18px;background:#fff;padding:14px;margin:0 0 12px;font-weight:900;box-shadow:var(--shadow)}.layout{grid-template-columns:1fr}.box{width:100%;margin-bottom:14px}.grid{grid-template-columns:1fr}.chartGrid{grid-template-columns:1fr}.health{grid-template-columns:1fr}.permGrid{grid-template-columns:1fr}.permHead{display:block}.permMsg{display:block;margin-top:8px}.barRow{grid-template-columns:1fr 82px}.card{min-height:110px;align-items:flex-start;text-align:left;padding:18px}.value{font-size:30px}.head{display:block}.updated{display:inline-block;margin-top:8px}table,thead,tbody,tr,th,td{display:block;width:100%}thead{display:none}tbody tr{background:#f7fcff;border:1px solid var(--edge);border-radius:18px;margin:10px 0;padding:8px 10px;box-shadow:0 8px 18px rgba(33,90,130,.08)}td{border-bottom:1px solid #d4ecfb;display:flex;justify-content:space-between;gap:12px;text-align:right;padding:10px 4px;font-size:14px}td:last-child{border-bottom:0}td:before{content:attr(data-label);font-weight:900;text-align:left;min-width:45%}td[colspan]{display:block;text-align:left}td[colspan]:before{content:''}}
-</style></head><body>
-<div class="top"><div class="topLine"><h1>🛰️  Monitor De Ventas Farmacias Macroxel</h1><span class="topStatus"><span id="dot2" class="dot"></span><span id="status2">Abriendo</span></span></div></div>
+:root{--bg:#eef8ff;--card:#fff;--ink:#073459;--mut:#66829a;--edge:#b9ddf3;--blue:#0f82ed;--blue2:#0a4a7a;--green:#19c978;--red:#e84662;--amber:#ffb933;--shadow:0 12px 28px rgba(38,94,130,.14)}*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#eaf8ff,#f9fdff);font-family:Arial,Helvetica,sans-serif;color:var(--ink)}.top,.wrap{max-width:1180px;margin:auto}.top{padding:18px 14px 6px}.topLine{display:flex;align-items:center;justify-content:space-between;gap:10px}.brand{display:flex;align-items:center;gap:10px}.brandIcon{width:38px;height:38px;border-radius:12px;background:linear-gradient(180deg,#1ca5ff,#0a66bd);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;box-shadow:var(--shadow)}h1{margin:0;font-size:24px}.topStatus{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--edge);background:#ffffffcc;border-radius:999px;padding:7px 11px;font-size:12px;color:var(--mut);font-weight:900}.dot{width:11px;height:11px;border-radius:50%;background:var(--red);box-shadow:0 0 10px var(--red)}.dot.ok{background:var(--green);box-shadow:0 0 10px var(--green)}.dot.warn{background:var(--amber);box-shadow:0 0 10px var(--amber)}.wrap{padding:12px 14px 30px}.tabs{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr));gap:12px;margin:8px 0 16px}.tab,button,input,select{font-weight:900;color:var(--ink)}.tab{border:1px solid var(--edge);background:#fff;border-radius:20px;padding:14px 10px;box-shadow:var(--shadow);cursor:pointer}.tab.active{background:#dff4ff;border-color:#54bdf5;color:#064571}.layout{display:grid;grid-template-columns:315px 1fr;gap:14px}.box{background:#ffffffdf;border:1px solid var(--edge);border-radius:22px;box-shadow:var(--shadow);padding:14px}.sideTitle{font-size:18px;font-weight:900;margin:0 0 12px}.field{margin-bottom:11px}label{font-size:12px;color:var(--mut);display:block;margin-bottom:5px;font-weight:900}input,select{width:100%;border:1px solid var(--edge);border-radius:15px;padding:12px;background:#f8fdff}.btnRow{display:flex;gap:8px;flex-wrap:wrap}.primary,.secondary,.danger{border:0;border-radius:15px;padding:12px 14px;color:#fff;cursor:pointer}.primary{background:linear-gradient(180deg,#31a4ff,#1376e9)}.secondary{background:#263344}.danger{background:#e84662}.primary.full{width:100%}.small{font-size:12px;color:var(--mut)}.msg{font-size:12px;font-weight:900;margin-top:7px;line-height:1.25}.store{background:#f7fcff;border:1px solid var(--edge);border-radius:18px;padding:12px;margin:9px 0;cursor:pointer}.store.active{background:#dcf3ff;border-color:#38aaf6}.store b{display:block}.store small{color:#7c9bb6}.head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.head h2{margin:0;font-size:24px}.updated{border:1px solid var(--edge);background:#f5fbff;border-radius:999px;padding:8px 12px;color:var(--mut);font-size:12px;font-weight:900}.bar{margin:12px 0;padding:12px 14px;border:1px solid var(--edge);background:#f7fcff;border-radius:18px;font-weight:900}.section{font-size:18px;font-weight:900;margin:18px 0 10px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.card{background:linear-gradient(180deg,#fff,#f4fbff);border:1px solid var(--edge);border-radius:26px;min-height:118px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:12px;box-shadow:var(--shadow)}.label{font-size:12px;font-weight:900;text-transform:uppercase;color:#47667f}.value{font-size:27px;font-weight:900;margin:9px 0 4px}.hint{font-size:12px;color:var(--mut)}table{width:100%;border-collapse:collapse;background:#f7fcff;border-radius:16px;overflow:hidden}th{background:#dff2ff;text-align:left;font-size:12px}td,th{padding:10px;border-bottom:1px solid #d4ecfb;vertical-align:top}.hidden{display:none!important}.chartGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.chartBox{background:#f7fcff;border:1px solid var(--edge);border-radius:22px;padding:14px;box-shadow:var(--shadow)}.chartTitle{font-size:16px;font-weight:900;margin:0 0 12px}.barRow{display:grid;grid-template-columns:1fr 95px;gap:6px 10px;align-items:center;font-size:12px;margin-bottom:9px}.barName{grid-column:1/3;font-weight:900;white-space:normal;line-height:1.16}.barTrack{height:18px;border-radius:999px;background:#dceffb;overflow:hidden}.barFill{height:100%;border-radius:999px;background:linear-gradient(90deg,#1689f7,#19c978);min-width:2px}.barVal{text-align:right;font-weight:900}.badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:900;background:#eaf4ff;border:1px solid var(--edge)}.okText{color:#15965b}.warnText{color:#a66b00}.badText{color:#d8203f}.home{display:none}.mobileBack{display:none}.notice{border:1px solid #ffd58a;background:#fff8e7;color:#7b4a00;border-radius:16px;padding:10px 12px;font-size:12px;font-weight:900;line-height:1.35}
+@media(max-width:820px){.top h1{font-size:18px}.tabs{display:none}.layout{display:block}.box{margin-bottom:14px}.grid,.chartGrid{grid-template-columns:1fr}.home{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:12px}.homeCard{background:#fff;border:1px solid var(--edge);box-shadow:var(--shadow);border-radius:24px;min-height:145px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 8px;font-weight:900}.homeIcon{font-size:42px}.homeTitle{font-size:18px;margin-top:10px}.homeSub{font-size:12px;color:var(--mut);margin-top:4px}.mobileBack{display:block;width:100%;border:1px solid var(--edge);border-radius:18px;background:#fff;padding:14px;margin:0 0 12px;font-weight:900;box-shadow:var(--shadow)}body:not(.mobileViewing) .layout{display:none!important}body.mobileViewing .home{display:none!important}table,thead,tbody,tr,th,td{display:block;width:100%}thead{display:none}tbody tr{background:#f7fcff;border:1px solid var(--edge);border-radius:18px;margin:10px 0;padding:8px 10px;box-shadow:0 8px 18px rgba(33,90,130,.08)}td{border-bottom:1px solid #d4ecfb;display:flex;justify-content:space-between;gap:12px;text-align:right;padding:10px 4px;font-size:14px}td:last-child{border-bottom:0}td:before{content:attr(data-label);font-weight:900;text-align:left;min-width:45%}td[colspan]{display:block;text-align:left}td[colspan]:before{content:''}}
+</style>
+</head><body>
+<div class="top"><div class="topLine"><div class="brand"><div class="brandIcon">✚</div><div><h1>Monitor de Ventas Macroxel</h1><div class="small">Visor limpio para reportes diarios enviados desde FarmaControl</div></div></div><span class="topStatus"><span id="dot2" class="dot"></span><span id="status2">Configura URL</span></span></div></div>
 <div class="wrap">
-
-<div class="home"><div class="homeCard" data-go="panel"><div class="homeIcon">📊</div><div class="homeTitle">Resumen día</div><div class="homeSub">Ventas y gastos</div></div><div class="homeCard" data-go="sucursales"><div class="homeIcon">🏪</div><div class="homeTitle">Sucursales</div><div class="homeSub">Jornada y estado</div></div><div class="homeCard" data-go="mensual"><div class="homeIcon">📅</div><div class="homeTitle">Mensual</div><div class="homeSub">Resultado del mes</div></div><div class="homeCard" data-go="anomalias"><div class="homeIcon">⚠️</div><div class="homeTitle">Anomalias</div><div class="homeSub">Alertas guardadas</div></div><div class="homeCard" data-go="graficos"><div class="homeIcon">📈</div><div class="homeTitle">Gráficos</div><div class="homeSub">Comparativa tiendas</div></div><div class="homeCard" data-go="permisos"><div class="homeIcon">🔐</div><div class="homeTitle">Permisos</div><div class="homeSub">Módulos por vendedor</div></div><div class="homeCard" data-go="config"><div class="homeIcon">⚙️</div><div class="homeTitle">Configuración</div><div class="homeSub">Fecha, usuario y sucursal</div></div></div>
-<button id="mobileBack" class="mobileBack">⬅️ Menú principal</button>
-<div class="tabs"><button class="tab active" data-tab="panel">📊 Resumen día</button><button class="tab" data-tab="sucursales">🏪 Sucursales</button><button class="tab" data-tab="mensual">📅 Mensual</button><button class="tab" data-tab="anomalias">⚠️ Anomalias</button><button class="tab" data-tab="graficos">📈 Gráficos</button><button class="tab" data-tab="permisos">🔐 Permisos</button><button class="tab" data-tab="config">⚙️ Configuración</button></div>
-<div class="layout"><aside class="box" id="configBox"><div class="section" style="margin-top:0">⚙️ Configuración</div><div class="field"><label>URL Firebase Realtime Database</label><input id="dburl" type="url" placeholder="https://tu-proyecto.firebaseio.com" value="https://registrodedatosfirebase-default-rtdb.firebaseio.com"></div><div class="field"><button id="saveDbUrl" class="primary" type="button">💾 Guardar URL</button><div id="dbUrlMsg" class="small" style="margin-top:7px;font-weight:900"></div></div><div class="field"><label>Fecha</label><input id="fecha" type="date"></div><div class="field"><label>Usuario</label><select id="usuario"><option value="__ALL__">(todos)</option></select></div><div id="stores" style="margin-top:14px"></div></aside><main>
-<section id="tab-panel" class="box"><div class="head"><div><h2 id="title">GLOBAL</h2><div id="subtitle" class="small"></div></div><div id="updated" class="updated">—</div></div><div id="resumeLine" class="bar"></div><div class="section">📌 Resumen principal</div><div id="cards" class="grid"></div><div id="serviciosResumenMonitor"></div><div class="section">Detalle por usuario</div><table id="userTable"></table></section>
-<section id="tab-sucursales" class="box hidden"><div class="head"><h2>🏪 Sucursales</h2><div id="storeCount" class="updated">0</div></div><table id="storeTable"></table></section>
-<section id="tab-mensual" class="box hidden"><div class="head"><h2>📅 Reporte mensual</h2><div class="updated" id="monthLabel">—</div></div><table id="monthTable"></table></section>
-<section id="tab-anomalias" class="box hidden"><div class="head"><h2>⚠️ Anomalias</h2><div class="updated" id="anomCount">0</div></div><table id="anomTable"></table></section>
-<section id="tab-graficos" class="box hidden"><div class="head"><h2>📈 Gráficos de tiendas</h2><div class="updated" id="graphLabel">—</div></div><div class="bar">Comparativa tomada directo de Firebase para detectar rendimiento, gastos, cancelaciones, anomalías y horas operativas.</div><div id="graphHealth" class="health"></div><div class="section">Comparativas principales</div><div id="graphGrid" class="chartGrid"></div></section>
-<section id="tab-permisos" class="box hidden"><div class="head"><h2>🔐 Permisos vendedores</h2><div class="updated" id="permStatus">Firebase</div></div><div class="bar">Activa o desactiva módulos por vendedor. Se guarda directo en Firebase en <b>/permisos/{sucursal}/{usuario}/modules</b>.</div><div id="permPanel"></div></section>
-<section id="tab-config" class="box hidden"><div class="head"><h2>⚙️ Configuración</h2><div class="updated">Monitor</div></div><div class="bar">Configura la URL de Firebase, fecha, usuario y sucursal desde el panel lateral. Al guardar la URL, el monitor la conserva en este equipo y vuelve a consultar Firebase con esa conexión.</div></section>
-</main></div></div>
+  <div class="home"><div class="homeCard" data-go="panel"><div class="homeIcon">📊</div><div class="homeTitle">Resumen día</div><div class="homeSub">Ventas y gastos</div></div><div class="homeCard" data-go="sucursales"><div class="homeIcon">🏪</div><div class="homeTitle">Sucursales</div><div class="homeSub">Tienda y usuarios</div></div><div class="homeCard" data-go="mensual"><div class="homeIcon">📅</div><div class="homeTitle">Mensual</div><div class="homeSub">Resultado del mes</div></div><div class="homeCard" data-go="graficos"><div class="homeIcon">📈</div><div class="homeTitle">Gráficos</div><div class="homeSub">Comparativa</div></div><div class="homeCard" data-go="config"><div class="homeIcon">⚙️</div><div class="homeTitle">Configuración</div><div class="homeSub">URL Firebase</div></div></div>
+  <button id="mobileBack" class="mobileBack">⬅️ Menú principal</button>
+  <div class="tabs"><button class="tab active" data-tab="panel">📊 Resumen día</button><button class="tab" data-tab="sucursales">🏪 Sucursales</button><button class="tab" data-tab="mensual">📅 Mensual</button><button class="tab" data-tab="graficos">📈 Gráficos</button><button class="tab" data-tab="config">⚙️ Configuración</button></div>
+  <div class="layout"><aside class="box" id="configBox"><div class="sideTitle">⚙️ Conexión y filtros</div><div class="field"><label>URL Firebase Realtime Database</label><input id="dburl" type="url" placeholder="https://tu-proyecto.firebaseio.com"></div><div class="field"><div class="btnRow"><button id="saveDbUrl" class="primary" type="button">💾 Guardar y validar</button><button id="reloadData" class="secondary" type="button">🔄 Recargar</button></div><div id="dbUrlMsg" class="msg"></div></div><div class="notice">Este visor usa únicamente la ruta <b>/reportes_diarios</b>. La URL no queda fija: cada cliente debe pegar y guardar su propia base Firebase.</div><div class="field" style="margin-top:12px"><label>Fecha</label><input id="fecha" type="date"></div><div class="field"><label>Usuario</label><select id="usuario"><option value="__ALL__">Todos</option></select></div><div id="stores" style="margin-top:14px"></div></aside><main>
+    <section id="tab-panel" class="box"><div class="head"><div><h2 id="title">Resumen día</h2><div id="subtitle" class="small"></div></div><div id="updated" class="updated">—</div></div><div id="resumeLine" class="bar"></div><div class="section">📌 Indicadores principales</div><div id="cards" class="grid"></div><div class="section">Detalle por usuario</div><table id="userTable"></table></section>
+    <section id="tab-sucursales" class="box hidden"><div class="head"><h2>🏪 Sucursales</h2><div id="storeCount" class="updated">0</div></div><div class="bar">Se muestran las tiendas detectadas desde <b>/reportes_diarios</b>, incluyendo nombre activo de tienda y usuarios activos enviados por el sistema.</div><table id="storeTable"></table></section>
+    <section id="tab-mensual" class="box hidden"><div class="head"><h2>📅 Reporte mensual</h2><div class="updated" id="monthLabel">—</div></div><table id="monthTable"></table></section>
+    <section id="tab-graficos" class="box hidden"><div class="head"><h2>📈 Gráficos</h2><div class="updated" id="graphLabel">—</div></div><div class="bar">Comparativa calculada solo con los reportes diarios existentes en Firebase.</div><div id="graphGrid" class="chartGrid"></div></section>
+    <section id="tab-config" class="box hidden"><div class="head"><h2>⚙️ Configuración</h2><div class="updated">Monitor</div></div><div class="bar">Pega la URL Firebase Realtime Database del cliente y presiona <b>Guardar y validar</b>. El visor conserva la URL en este equipo.</div></section>
+  </main></div>
+</div>
 <script>
-const $=id=>document.getElementById(id);let DATA={diarios:{},satelite:{},mensuales:{},anomalias:{},permisos:{}},selected='GLOBAL',currentTab='panel';
-const money=v=>Number(v||0).toLocaleString('es-MX',{style:'currency',currency:'MXN'}), n=v=>Number(v||0).toLocaleString('es-MX');
-function isObj(x){return x&&typeof x==='object'&&!Array.isArray(x)} function num(v){if(v==null||v==='')return 0;if(typeof v==='number')return v;return Number(String(v).replace(/[^0-9.-]/g,''))||0}
-function isoDate(s){if(!s)return'';s=String(s);let m=s.match(/(20\d{2})[-\/](\d{1,2})[-\/](\d{1,2})/);if(m)return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;m=s.match(/(\d{1,2})[-\/](\d{1,2})[-\/](20\d{2})/);if(m)return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;return''}
+const $=id=>document.getElementById(id);
+const STORAGE_URL='MACROXEL_MONITOR_FIREBASE_URL';
+let DATA={diarios:{}}, selected='GLOBAL', currentTab='panel';
+
+const money=v=>Number(v||0).toLocaleString('es-MX',{style:'currency',currency:'MXN'});
+const n=v=>Number(v||0).toLocaleString('es-MX');
+function isObj(x){return x&&typeof x==='object'&&!Array.isArray(x)}
+function num(v){if(v==null||v==='')return 0;if(typeof v==='number')return v;return Number(String(v).replace(/[^0-9.-]/g,''))||0}
+function clean(v){return String(v==null?'':v).trim()}
+function escapeHtml(s){return String(s??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]||c))}
+function isoDate(s){
+  if(!s)return'';s=String(s);
+  let m=s.match(/(20\d{2})[-\/](\d{1,2})[-\/](\d{1,2})/);if(m)return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  m=s.match(/(\d{1,2})[-\/](\d{1,2})[-\/](20\d{2})/);if(m)return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  return'';
+}
 function ymOf(d){return String(d||'').slice(0,7)}
+function today(){let d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function isYm(x){return /^20\d{2}-\d{1,2}$/.test(String(x||''))}
+function lastMs(o={}){return num(o.updatedAtMs)||num(o.lastSeenMs)||num(o.ts)||num(o.timestamp)||Date.parse(o.updatedAt||o.updatedAtLocal||o.createdAt||o.fechaHora||'')||0}
+
 function fbBase(){return $('dburl').value.trim().replace(/\/+$/,'')}
-function loadDbUrl(){
-  let saved=localStorage.getItem('MACROXEL_MONITOR_FIREBASE_URL');
-  if(saved) $('dburl').value=saved;
-}
-function saveDbUrl(){
-  let url=$('dburl').value.trim().replace(/\/+$/,'');
-  let msg=$('dbUrlMsg');
-  if(!url){ if(msg)msg.textContent='❌ Escribe una URL válida.'; return; }
-  if(!/^https:\/\/.+firebaseio\.com$|^https:\/\/.+firebasedatabase\.app$/.test(url)){
-    if(msg)msg.textContent='⚠️ Revisa la URL. Debe ser Firebase Realtime Database.';
-    return;
-  }
-  $('dburl').value=url;
-  localStorage.setItem('MACROXEL_MONITOR_FIREBASE_URL',url);
-  if(msg)msg.textContent='✅ URL guardada. Reconectando...';
-  refresh();
-}
-function get(path){let base=fbBase();return fetch(base+path+'.json?ts='+Date.now()).then(r=>{if(!r.ok)throw new Error(r.status+' '+r.statusText);return r.json()}).then(x=>x||{})}
-function safeKey(v){return encodeURIComponent(String(v||'').replace(/[.#$\[\]]/g,'_'))}
-async function put(path,data){
-  let r=await fetch(fbBase()+path+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data||{})});
-  if(!r.ok){let t='';try{t=await r.text()}catch(_){ }throw new Error('Firebase PUT '+r.status+' '+r.statusText+' '+t)}
-  return r.json();
-}
-async function patch(path,data){
-  let r=await fetch(fbBase()+path+'.json',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(data||{})});
-  if(!r.ok){let t='';try{t=await r.text()}catch(_){ }throw new Error('Firebase PATCH '+r.status+' '+r.statusText+' '+t)}
-  return r.json();
-}
-function val(o,keys){for(const k of keys){if(o&&Object.prototype.hasOwnProperty.call(o,k)&&o[k]!=null&&o[k]!=='')return o[k]}return 0}
-function scan(o,regs){let t=0;if(!isObj(o))return 0;for(const [k,v] of Object.entries(o)){let kk=k.toLowerCase();if(isObj(v))continue;if(regs.some(r=>r.test(kk)))t+=num(v)}return t}
-const KEYS={ventas:['totalVentas','ventasActivas','ventasNetas','ventasDia','ventas','ventaTotal','farmaciaProductosMontoUI','farmaciaProductosMonto','farmaciaMontoUI','farmaciaMonto','farmaciaDia','serviciosMontoUI','recargasMontoUI','paqueteriaMontoUI','farmaciaPaqueteriaMontoUI'],servicios:['totalServiciosMonto','serviciosMonto','serviciosMontoUI','serviciosRealizadosMonto','serviciosDiaMonto'],serviciosCantidad:['totalServiciosCantidad','serviciosCantidad','serviciosRealizadosCantidad'],efectivo:['efectivo','efectivoMontoUI','efectivoMonto','efectivoTotal','efectivoVentas','cash'],tarjeta:['tarjeta','tarjetaMontoUI','tarjetaMonto','tarjetaTotal','tarjetaVentas','tpv','card'],gastos:['gastosDelDia','gastosDia','gastosTotal','gastosMontoUI','gastosMonto','gastos','gastosDiaMontoUI'],costo:['costoProductoVendido','costoProductoVendidoUI','costoTotal','costoVendido','costo'],ganancia:['gananciaProducto','gananciaProductoUI','ganancia','utilidad','utilidadNeta'],descuentos:['descuentosTotal','descuentosDia','totalDescuentos','descuentosMontoUI','descuentoMonto','descMonto','Descuento ($)','descuento','descuentos','discount','discountAmount'],lineas:['lineas','lineasTotal','items','piezas','pzs','productos'],tickets:['tickets','ticketsTotal','ventasTickets','ticketCount','ticketsActivos'],iva:['totalIVA']};
-function metric(r,m){let d=num(val(r,KEYS[m]||[]));if(d)return d; if(m==='ventas'){let base=scan(r,[/venta/,/farmacia.*monto/,/productos.*monto/,/servicio.*monto/,/recarga.*monto/,/paqueteria.*monto/]);return base?Math.max(0,base-metric(r,'descuentos')):0;}if(m==='servicios')return Math.max(num(r.totalServiciosMonto),num(r.serviciosMonto),num(r.serviciosMontoUI),num(r.serviciosRealizadosMonto),0);if(m==='serviciosCantidad')return Math.max(num(r.totalServiciosCantidad),num(r.serviciosCantidad),num(r.serviciosRealizadosCantidad),0);if(m==='gastos')return scan(r,[/gasto/]);if(m==='efectivo')return scan(r,[/efectivo/,/cash/]);if(m==='tarjeta')return scan(r,[/tarjeta/,/tpv/,/card/]);if(m==='costo')return scan(r,[/costo/]);if(m==='ganancia')return scan(r,[/ganancia/,/utilidad/]);if(m==='descuentos')return scan(r,[/descuento/]);if(m==='iva'){let v=num(val(r,['totalIVA'])); if(v)return v; return Math.max(num(r.ivaCobrado),num(r.ivaDia),num(r.ivaAcumulado),num(r.ivaTotal),num(r.ivaMensual),0);}if(m==='lineas')return scan(r,[/linea/,/pzs/,/pieza/]);if(m==='tickets')return scan(r,[/ticket/]);return 0}
-function has(r,m){return (KEYS[m]||[]).some(k=>r&&Object.prototype.hasOwnProperty.call(r,k))||metric(r,m)!==0}
-function cancel(r){let c=isObj(r.canceladas)?r.canceladas:{};return{total:num(val(r,['canceladasTotal','canceladoTotal','ventasCanceladasMonto','canceladasMonto']))||num(val(c,['total','monto','ef','ta'])),tickets:num(val(r,['canceladasTickets','ticketsCancelados','ventasCanceladasTickets']))||num(val(c,['tickets','ticket','pzs'])),lineas:num(val(r,['canceladasLineas','lineasCanceladas']))||num(val(c,['lineas']))}}
-function sum(rows){let s={ventas:0,servicios:0,serviciosCantidad:0,efectivo:0,tarjeta:0,gastos:0,costo:0,ganancia:0,descuentos:0,iva:0,lineas:0,tickets:0,cancelTotal:0,cancelTickets:0,cancelLineas:0};for(const r of rows){for(const m of ['ventas','servicios','serviciosCantidad','efectivo','tarjeta','gastos','costo','ganancia','descuentos','iva','lineas','tickets'])s[m]+=metric(r,m);let c=cancel(r);s.cancelTotal+=c.total;s.cancelTickets+=c.tickets;s.cancelLineas+=c.lineas}if(!s.ganancia&&s.ventas&&s.costo)s.ganancia=s.ventas-s.costo;s.efectivoNeto=s.efectivo-s.gastos;return s}
-function servicioName(x){return String(x.servicio||x.nombre||x.name||x.producto||x.product||x.descripcion||'SERVICIO').trim()||'SERVICIO'}
-function serviciosDetalleRows(rows){let map={};for(const r of rows){let det=r.serviciosDetalle||r.detalleServicios||r.servicios||[];if(isObj(det))det=Object.values(det);if(Array.isArray(det)&&det.length){for(const it of det){if(!isObj(it))continue;let name=servicioName(it);let qty=num(it.qty||it.cantidad||it.piezas||it.totalServiciosCantidad)||0;let total=num(it.total||it.monto||it.importe||it.totalServiciosMonto)||0;if(!qty&&total)qty=1;map[name]=map[name]||{servicio:name,cantidad:0,total:0};map[name].cantidad+=qty;map[name].total+=total;}}else{let total=metric(r,'servicios'),qty=metric(r,'serviciosCantidad');if(total||qty){let name='SERVICIOS REALIZADOS';map[name]=map[name]||{servicio:name,cantidad:0,total:0};map[name].cantidad+=qty||1;map[name].total+=total;}}}return Object.values(map).sort((a,b)=>(b.total-a.total)||(b.cantidad-a.cantidad)||a.servicio.localeCompare(b.servicio,'es'))}
-function renderServiciosDetalle(rows){let det=serviciosDetalleRows(rows), total=det.reduce((a,x)=>a+num(x.total),0), cant=det.reduce((a,x)=>a+num(x.cantidad),0);if(!det.length)return '<div class="bar">Sin servicios realizados para esta fecha/usuario.</div>';return '<div class="section">🧾 Resumen de servicios realizados</div><div class="bar"><b>Total servicios:</b> '+money(total)+' · <b>Cantidad:</b> '+n(cant)+'</div><table id="serviciosTable"><thead><tr><th>Servicio</th><th>Cantidad</th><th>Total</th></tr></thead><tbody>'+det.map(x=>'<tr><td>'+x.servicio+'</td><td>'+n(x.cantidad)+'</td><td>'+money(x.total)+'</td></tr>').join('')+'</tbody></table>'}
-function normUser(u){return String(u||'admin').trim()||'admin'}
-function flattenDaily(){let out=[],root=DATA.diarios||{};for(const [storeId,a] of Object.entries(root)){if(!isObj(a))continue;for(const [k1,b] of Object.entries(a)){if(!isObj(b))continue;if(/^20\d{2}-\d{1,2}$/.test(k1)){let ym=k1.replace(/-(\d)$/,'-0$1');for(const [k2,c] of Object.entries(b)){let date=isoDate(k2);if(!date||!isObj(c))continue;for(const [u,d] of Object.entries(c)){if(isObj(d)&&normUser(u)!=='todos')out.push({...d,storeId,ym,date,user:normUser(u)})}}}else{let date=isoDate(k1);if(date){for(const [u,d] of Object.entries(b)){if(isObj(d)&&normUser(u)!=='todos')out.push({...d,storeId,ym:ymOf(date),date,user:normUser(u)})}}}}}return out}
-function flattenMonth(){let out=[];for(const [storeId,a] of Object.entries(DATA.mensuales||{})){if(!isObj(a))continue;for(const [ym,b] of Object.entries(a)){if(isObj(b))out.push({...b,storeId,ym:ym.replace(/-(\d)$/,'-0$1')})}}return out}
-function state(id){let n=DATA.satelite?.[id]||{};return n.estado||n.state||n}
-function lastMs(o={}){return num(o.updatedAtMs)||num(o.lastSeenMs)||num(o.ts)||num(o.timestamp)||Date.parse(o.updatedAt||o.updatedAtLocal||o.updatedAtUTC||o.horaLocal||o.horaAperturaLocal||o.horaCierreLocal||o.fechaHora||'')||0}
-function isTodayDate(d){return isoDate(d)===today()}
-function online(o){let ms=lastMs(o);return o?.online===true||o?.connected===true||Boolean(ms&&Date.now()-ms<3*3600000)}
-function cleanStoreName(v){
-  v=(v==null?'':String(v)).trim();
-  if(!v||v==='undefined'||v==='null')return '';
-  return v.replace(/\s+/g,' ');
-}
-function nameSpecificScore(v){
-  v=cleanStoreName(v);
-  if(!v)return -999;
-  let up=v.toUpperCase();
-  let score=Math.min(v.length,60);
-  if(up==='FARMABIEN'||up==='FARMACIA'||up==='MACROXEL')score-=35;
-  if(/GARDENIAS|LOMAS|BIENESTAR|CONSULTORIO|SUCURSAL|HGAM|PADIERNA|FARMABIEN\s+\w+/i.test(v))score+=25;
-  return score;
-}
-function pushStoreNameCandidate(arr,id,o,prio){
-  if(!isObj(o))return;
-  let nm=cleanStoreName(o.storeName||o.nombreSucursal||o.nombreTienda||o.nombreFarmacia||o.nombre||o.name||o.sucursal||o.branchName||o.displayName);
-  if(!nm||nm===id)return;
-  arr.push({name:nm,score:prio+nameSpecificScore(nm),ms:lastMs(o)});
-}
-function storeName(id,o={}){
-  let arr=[];
-  pushStoreNameCandidate(arr,id,o,60);
-  pushStoreNameCandidate(arr,id,state(id),45);
-  let sat=DATA.satelite?.[id]||{};
-  pushStoreNameCandidate(arr,id,sat.estado||sat.state||sat,45);
-  if(isObj(sat.eventos)){
-    Object.values(sat.eventos).forEach(day=>{if(isObj(day))Object.values(day).forEach(ev=>pushStoreNameCandidate(arr,id,ev,35));});
-  }
-  let p=DATA.permisos?.[id]||{};
-  pushStoreNameCandidate(arr,id,p.meta,90);
-  pushStoreNameCandidate(arr,id,p,70);
-  let m=DATA.mensuales?.[id]||{};
-  pushStoreNameCandidate(arr,id,m.meta,85);
-  Object.entries(m).forEach(([k,v])=>{
-    if(k==='meta')return;
-    pushStoreNameCandidate(arr,id,v.meta||v,65);
-    if(isObj(v?.days))Object.values(v.days).forEach(day=>{if(isObj(day))Object.values(day).forEach(r=>pushStoreNameCandidate(arr,id,r,75));});
-  });
-  flattenDaily().filter(r=>r.storeId===id).forEach(r=>pushStoreNameCandidate(arr,id,r,80));
-  if(!arr.length)return id;
-  arr.sort((a,b)=>(b.score-a.score)||(b.ms-a.ms));
-  return arr[0].name;
-}
-function latestDailyByStore(id){let rows=flattenDaily().filter(r=>r.storeId===id);rows.sort((a,b)=>lastMs(b)||Date.parse(b.date||'')-(lastMs(a)||Date.parse(a.date||'')));return rows[0]||{}}
-function activeFromFirebase(id,o={}){let st=state(id);if(online(st)||online(o))return true;let d=latestDailyByStore(id);let ms=lastMs(d);return Boolean(ms&&Date.now()-ms<3*3600000)}
-function allStores(){let s={};for(const [id,o] of Object.entries(DATA.satelite||{}))s[id]={...(o.estado||o.state||o),_id:id,_hasSat:true};for(const r of flattenDaily()){let prev=s[r.storeId]||{};let prevMs=lastMs(prev), rMs=lastMs(r);s[r.storeId]={...prev,...r,_id:r.storeId,_hasDaily:true,_lastMs:Math.max(prevMs,rMs)}}for(const r of flattenMonth())s[r.storeId]={...(s[r.storeId]||{}),...r,_id:r.storeId,_hasMonth:true};return s}
-function normStoreName(n){return String(n||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim()}
-function storeScore(id,o){let ms=Math.max(lastMs(o)||0,lastMs(state(id))||0,o._lastMs||0);let active=activeFromFirebase(id,o)?1:0;let data=(o._hasDaily?1:0)+(o._hasMonth?1:0);let users=usuariosPermisoSafe(id).length;return data*10000000000000+active*1000000000000+Math.min(ms,999999999999)+users}
-function realStores(){
-  let all=allStores(), best={};
-  Object.entries(all).forEach(([id,o])=>{
-    if(!id||id==='undefined'||id==='null')return;
-    let hasData=o._hasDaily||o._hasMonth||activeFromFirebase(id,o);
-    if(!hasData)return;
-    let nm=normStoreName(storeName(id,o));
-    if(!nm||nm===normStoreName(id))nm=id;
-    if(!best[nm]||storeScore(id,o)>storeScore(best[nm].id,best[nm].o))best[nm]={id,o};
-  });
-  let out={};Object.values(best).forEach(x=>out[x.id]=x.o);return out;
-}
-function rowsFor(id){let f=$('fecha').value,u=$('usuario').value;return flattenDaily().filter(r=>(id==='GLOBAL'||r.storeId===id)&&r.date===f&&(u==='__ALL__'||r.user===u))}
-function availableDates(){return [...new Set(flattenDaily().map(r=>r.date).filter(Boolean))].sort()}function ensureDate(){let d=availableDates();if(d.length&&!d.includes($('fecha').value))$('fecha').value=d[d.length-1]}
-function renderSelectors(){let users=[...new Set(flattenDaily().filter(r=>r.date===$('fecha').value).map(r=>r.user))].sort();let cur=$('usuario').value;$('usuario').innerHTML='<option value="__ALL__">(todos)</option>'+users.map(u=>`<option>${u}</option>`).join('');$('usuario').value=users.includes(cur)?cur:'__ALL__'}
-function renderStores(){let box=$('stores');box.innerHTML='';let mk=(id,label,sub)=>{let d=document.createElement('div');d.className='store '+(selected===id?'active':'');d.innerHTML=`<b>${label}</b><small>${sub}</small>`;d.onclick=()=>{selected=id;render()};box.appendChild(d)};mk('GLOBAL','🌎 GLOBAL','Todas las sucursales');for(const [id,o] of Object.entries(realStores()))mk(id,storeName(id,o),`${id} · ${activeFromFirebase(id,o)?'🟢 activo':'🔴 sin señal'} · 📊 datos Firebase`)}
-function card(l,v,h){return `<div class="card"><div class="label">${l}</div><div class="value">${v}</div><div class="hint">${h||''}</div></div>`}
-function renderPanel(){let rows=rowsFor(selected),s=sum(rows),stores=allStores();$('title').textContent=selected==='GLOBAL'?'🌎 GLOBAL (todas las sucursales)':'🏪 '+storeName(selected,stores[selected]||{});$('subtitle').textContent=`Fecha: ${$('fecha').value} · Usuario: ${$('usuario').value==='__ALL__'?'todos':$('usuario').value}`;$('resumeLine').textContent=`Líneas: ${n(s.lineas)} · Tickets: ${n(s.tickets)} · Canceladas: ${n(s.cancelTickets)} (${money(s.cancelTotal)}) · Costo: ${money(s.costo)} · Ganancia: ${money(s.ganancia)} · IVA: ${money(s.iva)} · Fecha: ${$('fecha').value}`;let cards=[];cards.push(card('Total ventas',money(s.ventas),'Ventas tomadas de Firebase'));if(s.efectivo||rows.some(r=>has(r,'efectivo')))cards.push(card('Efectivo',money(s.efectivo),'Solo ventas activas'));if(s.tarjeta||rows.some(r=>has(r,'tarjeta')))cards.push(card('Tarjeta',money(s.tarjeta),'Solo ventas activas'));if(s.efectivo||s.gastos)cards.push(card('Efectivo neto',money(s.efectivoNeto),'Efectivo - gastos del día'));if(s.costo||rows.some(r=>has(r,'costo')))cards.push(card('Costo de producto vendido',money(s.costo),'Desde Firebase'));if(s.ganancia||rows.some(r=>has(r,'ganancia')))cards.push(card('Ganancia de producto',money(s.ganancia),'Ventas - costo'));if(s.gastos||rows.some(r=>has(r,'gastos')))cards.push(card('Gastos del día',money(s.gastos),'Gastos registrados'));if(s.cancelTotal||s.cancelTickets)cards.push(card('Canceladas',money(s.cancelTotal),`${n(s.cancelTickets)} ticket(s) · ${n(s.cancelLineas)} línea(s)`));if(s.descuentos||rows.some(r=>has(r,'descuentos')))cards.push(card('Descuentos del día',money(s.descuentos),'Descuentos guardados'));if(s.iva||rows.some(r=>has(r,'iva')))cards.push(card('IVA cobrado',money(s.iva),'IVA enviado por sistema'));if(s.servicios||rows.some(r=>has(r,'servicios')))cards.push(card('Servicios realizados',money(s.servicios),`${n(s.serviciosCantidad)} servicio(s) del día`));$('cards').innerHTML=cards.join('')||'<div class="bar">Sin datos para esta fecha.</div>';$('serviciosResumenMonitor').innerHTML=renderServiciosDetalle(rows);let by={};for(const r of rows){by[r.user]=by[r.user]||[];by[r.user].push(r)};let cols=[['Usuario',x=>x.u],['Ventas',x=>money(x.s.ventas)],['Servicios',x=>money(x.s.servicios)],['Efectivo',x=>money(x.s.efectivo)],['Tarjeta',x=>money(x.s.tarjeta)],['Gastos',x=>money(x.s.gastos)],['Costo',x=>money(x.s.costo)],['Ganancia',x=>money(x.s.ganancia)],['IVA',x=>money(x.s.iva)],['Canceladas',x=>n(x.s.cancelTickets)],['Cancelado $',x=>money(x.s.cancelTotal)]];$('userTable').innerHTML='<thead><tr>'+cols.map(c=>`<th>${c[0]}</th>`).join('')+'</tr></thead><tbody>'+ (Object.entries(by).map(([u,rs])=>{let x={u,s:sum(rs)};return '<tr>'+cols.map(c=>`<td>${c[1](x)}</td>`).join('')+'</tr>'}).join('')||`<tr><td colspan="${cols.length}">Sin reportes del día para esta selección</td></tr>` )+'</tbody>'}
-function eventMs(e,k){
-  return lastMs(e)||num(e.ms)||num(e.timestamp)||num(e.createdAt)||num(e.updatedAt)||num(k)||Date.parse(e.horaLocal||e.horaAperturaLocal||e.horaCierreLocal||e.fechaHora||e.createdAt||e.updatedAt||'')||0
-}
-function eventDate(e,k,path=[]){
-  let f=isoDate(e?.fechaISO||e?.dateISO||e?.fecha||e?.date||e?.dia||e?.createdAt||e?.updatedAt||e?.horaLocal||e?.horaAperturaLocal||e?.horaCierreLocal||k);
-  if(f) return f;
-  for(const x of (path||[])){ f=isoDate(x); if(f) return f; }
-  return ''
-}
-function time(ms){return ms?new Date(ms).toLocaleTimeString('es-MX'):'—'}
-function hours(a,b){if(!a||!b||b<a)return'—';let m=Math.round((b-a)/60000);return Math.floor(m/60)+' h '+String(m%60).padStart(2,'0')+' min'}
-function fmtEventTime(e,ms){return e?.horaAperturaLocal||e?.horaCierreLocal||e?.horaLocal||e?.updatedAtLocal||e?.updatedAt||time(ms)}
-function flatEventsForStore(id){
-  let node=DATA.satelite?.[id]||{}, out=[];
-  function addObj(e,path=[],key=''){
-    if(!isObj(e)) return;
-    let txt=JSON.stringify(e).toLowerCase();
-    let tipo=String(e.tipo||e.evento||e.reason||e.syncReason||e.accion||e.eventType||e.event||'').toLowerCase();
-    let ms=eventMs(e,key||path[path.length-1]);
-    let fecha=eventDate(e,key,path);
-    out.push({...e,ms,fecha,tipo,txt,__path:path.join('/')});
-  }
-  function walk(n,path=[]){
-    if(!isObj(n)) return;
-    let keys=Object.keys(n).map(k=>k.toLowerCase());
-    let looksEvent=['tipo','evento','reason','syncreason','accion','horaaperturalocal','horacierrelocal','horalocal','eventtype','event'].some(k=>keys.includes(k));
-    if(looksEvent){ addObj(n,path,path[path.length-1]||''); return; }
-    for(const [k,v] of Object.entries(n)) walk(v,path.concat(k));
-  }
-  // estado también puede traer última apertura/cierre
-  if(isObj(node.estado)) addObj(node.estado,['estado'],'estado');
-  if(isObj(node.state)) addObj(node.state,['state'],'state');
-  walk(node.eventos||{},['eventos']);
-  walk(node.events||{},['events']);
-  // compatibilidad si el nodo completo ya es el estado/evento
-  if(!node.eventos&&!node.events) addObj(node,[id],id);
-  return out;
-}
-function dailyEventFallback(id){
-  const f=$('fecha').value;
-  let rows=flattenDaily().filter(r=>r.storeId===id&&r.date===f), ev=[];
-  for(const r of rows){
-    let txt=JSON.stringify(r).toLowerCase();
-    let ap=r.horaAperturaLocal||r.horaApertura||r.apertura||r.aperturaLocal||r.horaInicio||r.inicio;
-    let ci=r.horaCierreLocal||r.horaCierre||r.cierreCaja||r.horaCorte||r.corteCaja||r.cierre;
-    if(ap) ev.push({...r,tipo:'apertura',txt,ms:eventMs({...r,horaAperturaLocal:ap},''),fecha:f,horaAperturaLocal:ap});
-    if(ci) ev.push({...r,tipo:'cierre_caja',txt,ms:eventMs({...r,horaCierreLocal:ci},''),fecha:f,horaCierreLocal:ci});
-  }
-  return ev;
-}
-function jornada(id){
-  let f=$('fecha').value;
-  let ev=flatEventsForStore(id).concat(dailyEventFallback(id)).filter(e=>!f||!e.fecha||e.fecha===f);
-  ev.sort((a,b)=>(a.ms||0)-(b.ms||0));
-  let ap=ev.find(e=>e.tipo.includes('apertura')||e.tipo.includes('inicio')||e.tipo.includes('open')||e.txt.includes('horaapertura')||e.txt.includes('apertura'))||null;
-  let cierres=ev.filter(e=>e.tipo.includes('cierre')||e.tipo.includes('corte')||e.tipo.includes('close')||e.txt.includes('horacierre')||e.txt.includes('cierre caja')||e.txt.includes('corte de caja'));
-  let ci=cierres[cierres.length-1]||null;
-  return{ap,ci,eventos:ev}
+function validFirebaseUrl(url){return /^https:\/\/.+(firebaseio\.com|firebasedatabase\.app)$/i.test(url||'')}
+function loadDbUrl(){let saved=localStorage.getItem(STORAGE_URL); if(saved) $('dburl').value=saved;}
+function setStatus(txt,cls){$('status2').textContent=txt;$('dot2').className='dot '+(cls||'')}
+async function get(path){let base=fbBase();let r=await fetch(base+path+'.json?ts='+Date.now());if(!r.ok)throw new Error(r.status+' '+r.statusText);return await r.json()||{}}
+async function saveDbUrl(){
+  let url=fbBase();let msg=$('dbUrlMsg');
+  if(!url){msg.textContent='❌ Escribe la URL Firebase del cliente.';setStatus('Sin URL','');return}
+  if(!validFirebaseUrl(url)){msg.textContent='⚠️ URL inválida. Debe ser Firebase Realtime Database.';setStatus('URL inválida','warn');return}
+  localStorage.setItem(STORAGE_URL,url);$('dburl').value=url;msg.textContent='Validando conexión...';await refresh(true);
 }
 
-function jornadaUsuarios(id){
-  let f=$('fecha').value;
-  let ev=flatEventsForStore(id).concat(dailyEventFallback(id)).filter(e=>!f||!e.fecha||e.fecha===f);
-  ev.sort((a,b)=>(a.ms||0)-(b.ms||0));
-  let by={};
-  ev.forEach(e=>{
-    let u=String(e.usuario||e.user||e.usuarioActivo||e.vendedor||e.cajero||'').trim()||'—';
-    if(u==='—')return;
-    by[u]=by[u]||{user:u,entrada:null,cierre:null,salida:null,count:0};
-    by[u].count++;
-    let txt=String((e.tipo||'')+' '+(e.evento||'')+' '+(e.txt||'')).toLowerCase();
-    let isEntrada=txt.includes('apertura')||txt.includes('login')||txt.includes('entrada')||e.horaEntrada||e.horaApertura||e.horaAperturaLocal;
-    let isCierre=txt.includes('cierre')||txt.includes('corte')||e.horaCierreCaja||e.horaCierreLocal||e.cierreCajaAt;
-    let isSalida=txt.includes('salida')||txt.includes('logout')||e.horaSalida||e.horaSalidaLocal;
-    if(isEntrada){ if(!by[u].entrada || (e.ms||0)<(by[u].entrada.ms||0)) by[u].entrada=e; }
-    if(isCierre){ if(!by[u].cierre || (e.ms||0)>(by[u].cierre.ms||0)) by[u].cierre=e; }
-    if(isSalida){ if(!by[u].salida || (e.ms||0)>(by[u].salida.ms||0)) by[u].salida=e; }
-  });
-  return Object.values(by).filter(x=>x.user&&x.user!=='—').sort((a,b)=>((a.entrada?.ms||a.cierre?.ms||0)-(b.entrada?.ms||b.cierre?.ms||0)));
+function readPathDate(path){for(let i=path.length-1;i>=0;i--){let d=isoDate(path[i]);if(d)return d}return''}
+function readPathUser(path,date){let i=path.findIndex(x=>isoDate(x)===date);if(i>=0&&path[i+1])return clean(path[i+1]);let last=clean(path[path.length-1]);if(last&&!isoDate(last)&&!isYm(last))return last;return''}
+function readPathStore(path,date){let i=path.findIndex(x=>isoDate(x)===date);if(i<=0)return'';let prev=clean(path[i-1]);if(isYm(prev)&&i>1)return clean(path[i-2]);return prev}
+
+function reportSources(o){
+  let arr=[o];
+  ['totales','resumen','detalle','kpis','metricas','metrics','data','datos'].forEach(k=>{if(isObj(o?.[k]))arr.push(o[k])});
+  return arr;
 }
-function userHours(x){
-  let ini=x.entrada?.ms||0, fin=x.cierre?.ms||x.salida?.ms||0;
-  if(!ini) return '—';
-  if(fin && fin>ini) return hours(ini,fin);
-  return 'En turno';
-}
-function jornadaUsuariosHtml(id){
-  let rows=jornadaUsuarios(id);
-  if(!rows.length) return '<small>Sin detalle por usuario.</small>';
-  return '<div style="display:flex;flex-direction:column;gap:8px">'+rows.map(x=>{
-    let ent=x.entrada?fmtEventTime(x.entrada,x.entrada.ms):'—';
-    let cie=x.cierre?fmtEventTime(x.cierre,x.cierre.ms):'Pendiente';
-    let hrs=userHours(x);
-    let estado=x.cierre?'✅ Cerró caja':'🟢 Sin corte';
-    return `<div style="border-bottom:1px solid #d4ecfb;padding-bottom:5px"><b>👤 ${x.user}</b> <small>${estado}</small><br><small>Entrada: ${ent}</small><br><small>Cierre caja: ${cie}</small><br><small><b>Horas laboradas: ${hrs}</b></small></div>`;
-  }).join('')+'</div>';
+function pick(o,keys){for(const src of reportSources(o||{})){for(const k of keys){if(src&&Object.prototype.hasOwnProperty.call(src,k)&&src[k]!=null&&src[k]!=='')return src[k]}}return''}
+function hasAnyKey(o,keys){for(const src of reportSources(o||{})){for(const k of keys){if(src&&Object.prototype.hasOwnProperty.call(src,k))return true}}return false}
+function valHit(o,keys){for(const src of reportSources(o||{})){for(const k of keys){if(src&&Object.prototype.hasOwnProperty.call(src,k))return{found:true,value:src[k]}}}return{found:false,value:0}}
+function copyPrimitiveFields(row,src){if(!isObj(src))return;for(const [k,v] of Object.entries(src)){if(isObj(v)||Array.isArray(v))continue;if(row[k]==null||row[k]==='')row[k]=v}}
+function normalizeReport(node,path){
+  let row={...node};
+  ['totales','resumen','detalle','kpis','metricas','metrics','data','datos'].forEach(k=>copyPrimitiveFields(row,node[k]));
+  let f=node.farmacia||node.datosFarmacia||node.configFarmacia||{};
+  if(isObj(f))copyPrimitiveFields(row,f);
+  let fecha=isoDate(pick(row,['fechaISO','fecha','dateISO','date','dia']))||readPathDate(path);
+  let usuario=clean(pick(row,['usuarioActivo','usuario','usuarioFiltro','user','vendedor','cajero','username']))||readPathUser(path,fecha)||'GENERAL';
+  row.fecha=fecha; row.usuario=usuario;
+  let storePath=readPathStore(path,fecha);
+  row.storeName=storeNameFrom(row)||storePath||'SIN TIENDA';
+  row.storeId=storeIdFrom(row)||row.storeName||storePath||'GLOBAL';
+  return row;
 }
 
-function renderTables(){let stores=realStores(),f=$('fecha').value;$('storeCount').textContent=Object.keys(stores).length+' sucursales';$('storeTable').innerHTML='<thead><tr><th>Sucursal</th><th>Estado</th><th>Detalle por usuario</th></tr></thead><tbody>'+Object.entries(stores).map(([id,o])=>{let j=jornada(id),usersHtml=jornadaUsuariosHtml(id);return `<tr><td><b>${storeName(id,o)}</b><br><small>${id}</small></td><td>${activeFromFirebase(id,o)?'🟢 Activa':'🔴 Sin señal'}</td><td>${usersHtml}<small>${j.eventos.length} evento(s) encontrados en Firebase.</small></td></tr>`}).join('')+'</tbody>';let ym=ymOf(f);$('monthLabel').textContent=ym;$('monthTable').innerHTML='<thead><tr><th>Sucursal</th><th>Ventas mes</th><th>Canceladas</th><th>Gastos</th><th>IVA cobrado</th><th>Servicios</th><th>Fijos</th><th>Variables</th><th>Resultado</th></tr></thead><tbody>'+Object.entries(stores).map(([id,o])=>{let d=sum(flattenDaily().filter(r=>r.storeId===id&&ymOf(r.date)===ym)),mm=(flattenMonth().find(r=>r.storeId===id&&r.ym===ym)||((DATA.mensuales&&DATA.mensuales[id]&&DATA.mensuales[id].meta)||{}))||{};let ventas=num(val(mm,['ventasNetas','ventasMes','ventas','totalVentas']))||d.ventas,iva=(num(val(mm,['totalIVA']))||Math.max(num(mm.ivaCobrado),num(mm.ivaTotal),num(mm.ivaAcumulado),num(mm.ivaMensual),0)||d.iva),cancel=num(val(mm,['canceladasTotal','canceladas']))||d.cancelTotal,gastos=num(val(mm,['gastosTotal','gastosMes','gastos']))||d.gastos,fijos=num(val(mm,['fijos','gastosFijos'])),vars=num(val(mm,['variables','gastosVariables']));let res=num(val(mm,['resultadoNeto','resultado','utilidad']))||(ventas-gastos-fijos-vars);let servicios=num(val(mm,['totalServiciosMonto','serviciosMonto','serviciosMontoUI']))||d.servicios;return `<tr><td><b>${storeName(id,o)}</b><br><small>${id}</small></td><td>${money(ventas)}</td><td>${money(cancel)}</td><td>${money(gastos)}</td><td>${money(iva)}</td><td>${money(servicios)}</td><td>${money(fijos)}</td><td>${money(vars)}</td><td>${money(res)}</td></tr>`}).join('')+'</tbody>'}
-function flattenAnom(){
-  const stores=allStores();
-  const storeIds=new Set(Object.keys(stores));
+function storeNameFrom(r){
+  return clean(pick(r,['tiendaActiva','nombreTienda','nombreActivoTienda','farmaciaActiva','nombreFarmacia','farmaciaNombre','nombreSucursal','sucursalNombre','sucursal','storeName','branchName','displayName']))||'';
+}
+function storeIdFrom(r){
+  return clean(pick(r,['storeId','sucursalId','idSucursal','idActivacion','licenseId','deviceId','licenciaId','idLicencia']))||'';
+}
+function activeUsersFrom(r){let u=pick(r,['usuariosActivos','activeUsers','usuarios','users'])||[];if(isObj(u))u=Object.values(u);if(!Array.isArray(u))u=[u];return u.map(x=>isObj(x)?(x.usuario||x.user||x.nombre||x.username||''):x).map(clean).filter(Boolean)}
+
+const METRIC_KEYS={
+  ventas:['totalVentas','ventasActivas','ventasNetas','ventasDia','ventas','ventaTotal','farmaciaProductosMontoUI','farmaciaProductosMonto','farmaciaMontoUI','farmaciaMonto','totalVenta','subtotal'],
+  servicios:['serviciosRealizados','totalServiciosMonto','serviciosMonto','serviciosMontoUI','serviciosRealizadosMonto','serviciosDiaMonto'],
+  serviciosCantidad:['serviciosCantidad','totalServiciosCantidad','serviciosRealizadosCantidad','serviciosDiaCantidad'],
+  efectivo:['efectivo','efectivoMontoUI','efectivoMonto','efectivoTotal','efectivoVentas','cash'],
+  tarjeta:['tarjeta','tarjetaMontoUI','tarjetaMonto','tarjetaTotal','tarjetaVentas','tpv','card'],
+  gastos:['gastosDia','gastosDelDia','gastosTotal','gastosMontoUI','gastosMonto','gastos','gastosDiaMontoUI'],
+  costo:['costoProductoVendido','costoProductoVendidoUI','costoTotal','costoVendido','costo'],
+  ganancia:['gananciaProducto','gananciaProductoUI','ganancia','utilidad','utilidadNeta'],
+  descuentos:['descuentosDia','descuentosTotal','totalDescuentos','descuentosMontoUI','descuentoMonto','descMonto','descuento','descuentos'],
+  monedero:['monederoUsado','saldoMonederoUsado','totalMonederoUsado'],
+  tickets:['tickets','ticketsTotal','ventasTickets','ticketCount','ticketsActivos'],
+  lineas:['lineas','lineasTotal','items','piezas','pzs','productos'],
+  iva:['ivaCobrado','totalIVA','ivaDia','ivaAcumulado','ivaTotal']
+};
+function scan(o,regs){let t=0;if(!isObj(o))return 0;for(const src of reportSources(o)){for(const [k,v] of Object.entries(src||{})){let kk=k.toLowerCase();if(isObj(v)||Array.isArray(v))continue;if(/necesaria|mensual|mes/.test(kk))continue;if(regs.some(r=>r.test(kk)))t+=num(v)}}return t}
+function metric(r,m){
+  let h=valHit(r,METRIC_KEYS[m]||[]); if(h.found)return num(h.value);
+  if(m==='ventas')return Math.max(0,scan(r,[/^ventas?$/,/totalventas/,/ventaneta/,/farmacia.*monto/,/productos.*monto/])-metric(r,'descuentos'));
+  if(m==='gastos')return scan(r,[/^gastos?$/,/gastodia/]);
+  if(m==='efectivo')return scan(r,[/^efectivo$/,/cash/]);
+  if(m==='tarjeta')return scan(r,[/^tarjeta$/,/tpv/,/card/]);
+  if(m==='costo')return scan(r,[/costoproductovendido/,/^costo$/]);
+  if(m==='ganancia')return scan(r,[/ganancia/,/utilidad/]);
+  if(m==='descuentos')return scan(r,[/descuento/]);
+  if(m==='iva')return scan(r,[/^iva/,/ivacobrado/]);
+  if(m==='monedero')return scan(r,[/monedero/]);
+  if(m==='tickets')return scan(r,[/^tickets?$/,/ticketcount/]);
+  if(m==='lineas')return scan(r,[/^lineas?$/,/pzs/,/pieza/]);
+  return 0;
+}
+function cancel(r){return{
+  total:num(pick(r,['canceladaImporte','canceladasTotal','canceladoTotal','ventasCanceladasMonto','canceladasMonto','canceladoImporte'])),
+  tickets:num(pick(r,['canceladaTickets','canceladasTickets','ticketsCancelados','ventasCanceladasTickets'])),
+  lineas:num(pick(r,['canceladaLineas','canceladasLineas','lineasCanceladas']))
+}}
+function looksReport(o){
+  if(!isObj(o))return false;
+  if(isObj(o.totales)||isObj(o.resumen))return true;
+  let keys=Object.keys(o), low=keys.map(k=>k.toLowerCase());
+  let primitive=Object.values(o).some(v=>!isObj(v)&&!Array.isArray(v));
+  let hasMetric=Object.values(METRIC_KEYS).flat().some(k=>Object.prototype.hasOwnProperty.call(o,k))||low.some(k=>/totalventas|efectivo|tarjeta|gastosdia|ivacobrado|gananciaproducto|tickets|lineas|cancelada|monedero/.test(k));
+  let hasMeta=low.some(k=>/fecha|usuario|tienda|sucursal|store|farmacia|license|licencia/.test(k));
+  return primitive&&(hasMetric||hasMeta);
+}
+function flattenDaily(){
   let out=[];
-  function inferStore(path,obj){
-    if(obj&&(obj.storeId||obj.sucursalId||obj.sucursal)) return obj.storeId||obj.sucursalId||obj.sucursal;
-    for(const x of path){ if(storeIds.has(x)||String(x).startsWith('store-')) return x; }
-    return '';
-  }
-  function inferFecha(path,obj){
-    let f=isoDate(obj?.fechaISO||obj?.dateISO||obj?.fecha||obj?.date||obj?.dia||obj?.createdAt||obj?.updatedAt||obj?.timestamp);
-    if(f) return f;
-    for(const x of path){ f=isoDate(x); if(f) return f; }
-    return '';
-  }
-  function inferMs(path,obj){
-    let m=lastMs(obj)||num(obj?.ms)||num(obj?.timestamp)||num(obj?.createdAt)||num(obj?.updatedAt);
-    if(m) return m;
-    for(let i=path.length-1;i>=0;i--){ m=num(path[i]); if(String(path[i]).length>=10&&m) return m; }
-    return 0;
-  }
-  function hasPrimitive(o){return isObj(o)&&Object.values(o).some(v=>!isObj(v)&&!Array.isArray(v));}
-  function hasObjectChild(o){return isObj(o)&&Object.values(o).some(v=>isObj(v));}
-  function hasAnomKey(o){
-    if(!isObj(o)) return false;
-    const keys=Object.keys(o).map(k=>k.toLowerCase());
-    return ['tipo','type','titulo','title','mensaje','message','detalle','detail','descripcion','description','motivo','reason','modulo','nivel','severity','usuario','user','storeid','sucursal','fecha','fechaiso','date','createdat','updatedat'].some(k=>keys.includes(k));
-  }
-  function addRecord(obj,path){
-    let o=isObj(obj)?obj:{mensaje:String(obj)};
-    let id=path[path.length-1]||'';
-    let sid=inferStore(path,o);
-    let fecha=inferFecha(path,o);
-    let ms=inferMs(path,o);
-    let detalle=o.detalle||o.detail||o.mensaje||o.message||o.descripcion||o.description||o.motivo||o.reason||o.texto||o.text||'';
-    if(!detalle){
-      detalle=Object.entries(o).filter(([k,v])=>!isObj(v)&&!Array.isArray(v)&&!['fecha','fechaISO','date','dateISO','createdAt','updatedAt','timestamp','storeId','sucursalId','sucursal','usuario','user','tipo','type','titulo','title'].includes(k)).map(([k,v])=>`${k}: ${v}`).join(' · ');
+  function walk(node,path=[]){
+    if(!isObj(node))return;
+    if(looksReport(node)){
+      let row=normalizeReport(node,path);
+      if(row.fecha)out.push(row);
+      return;
     }
-    out.push({...o,__id:id,storeId:sid,fecha,__ms:ms,__detalle:detalle});
+    for(const [k,v] of Object.entries(node))walk(v,path.concat(k));
   }
-  function walk(n,path=[]){
-    if(!isObj(n)){ if(n!=null&&String(n).trim()) addRecord(n,path); return; }
-    // Si es una hoja o tiene campos propios de anomalía, se considera anomalía guardada.
-    if(hasAnomKey(n) || (hasPrimitive(n)&&!hasObjectChild(n))){ addRecord(n,path); return; }
-    for(const [k,v] of Object.entries(n)) walk(v,path.concat(k));
+  walk(DATA.diarios,[]);
+  let seen=new Set();
+  return out.filter(r=>{let key=[r.storeId,r.fecha,r.usuario,lastMs(r),metric(r,'ventas'),metric(r,'efectivo'),metric(r,'tarjeta'),metric(r,'gastos')].join('|');if(seen.has(key))return false;seen.add(key);return true});
+}
+function allStores(){
+  let map={};
+  for(const r of flattenDaily()){
+    let id=r.storeId||r.storeName||'GLOBAL';
+    map[id]=map[id]||{id,name:r.storeName||id,users:new Set(),activeUsers:new Set(),rows:[],updated:0};
+    map[id].name=r.storeName||map[id].name;
+    map[id].rows.push(r);
+    map[id].updated=Math.max(map[id].updated,lastMs(r)||Date.parse(r.fecha)||0);
+    map[id].users.add(r.usuario);
+    activeUsersFrom(r).forEach(u=>map[id].activeUsers.add(u));
   }
-  walk(DATA.anomalias,[]);
-  return out.sort((a,b)=>(b.__ms||0)-(a.__ms||0));
+  return map;
 }
-function renderAnom(){
-  let f=$('fecha').value;
-  let rows=flattenAnom().filter(a=>(!f||!a.fecha||a.fecha===f)&&(selected==='GLOBAL'||!a.storeId||a.storeId===selected));
-  $('anomCount').textContent=rows.length+' anomalía(s)';
-  $('anomTable').innerHTML='<thead><tr><th>Fecha</th><th>Sucursal</th><th>Usuario</th><th>Tipo</th><th>Detalle</th></tr></thead><tbody>'+(
-    rows.map(a=>{
-      let st=a.storeId?storeName(a.storeId, allStores()[a.storeId]||{}):'—';
-      let usr=a.usuario||a.user||a.responsable||'—';
-      let tipo=a.tipo||a.type||a.titulo||a.title||a.modulo||'Anomalía';
-      let det=a.__detalle||'Registro guardado en Firebase';
-      return `<tr><td>${a.fecha||'—'}<br><small>${time(a.__ms)}</small></td><td>${st}<br><small>${a.storeId||''}</small></td><td>${usr}</td><td>${tipo}</td><td>${det}</td></tr>`;
-    }).join('')||'<tr><td colspan="5">Sin anomalías para esta selección</td></tr>'
-  )+'</tbody>';
-}
-
-function metricStoreRows(){
-  let stores=realStores(), f=$('fecha').value, ym=ymOf(f), anoms=flattenAnom();
-  return Object.entries(stores).map(([id,o])=>{
-    let day=sum(flattenDaily().filter(r=>r.storeId===id&&r.date===f));
-    let month=sum(flattenDaily().filter(r=>r.storeId===id&&ymOf(r.date)===ym));
-    let j=jornada(id), ams=j.ap?.ms||0, cms=j.ci?.ms||0;
-    let anomDia=anoms.filter(a=>(!a.storeId||a.storeId===id)&&(!a.fecha||a.fecha===f)).length;
-    let anomMes=anoms.filter(a=>(!a.storeId||a.storeId===id)&&(!a.fecha||ymOf(a.fecha)===ym)).length;
-    let hrs=(ams&&cms&&cms>ams)?((cms-ams)/3600000):0;
-    return {id,name:storeName(id,o),active:activeFromFirebase(id,o),ventas:day.ventas,gastos:day.gastos,ganancia:day.ganancia,iva:day.iva,cancel:day.cancelTotal,cancelTickets:day.cancelTickets,tickets:day.tickets,lineas:day.lineas,mes:month.ventas,mesGastos:month.gastos,mesGanancia:month.ganancia,anomDia,anomMes,hrs,usuario:(j.ap?.usuario||j.ap?.user||j.ci?.usuario||j.ci?.user||o.user||o.usuario||'—')};
-  }).sort((a,b)=>b.ventas-a.ventas);
-}
-function chartBars(title, rows, key, format, emptyText){
-  let max=Math.max(...rows.map(r=>num(r[key])),0);
-  let body=rows.filter(r=>num(r[key])>0).map(r=>{
-    let v=num(r[key]), pct=max?Math.max(3,(v/max)*100):0;
-    return `<div class="barRow"><div class="barName" title="${r.name}">${r.name}</div><div class="barTrack"><div class="barFill" style="width:${pct}%"></div></div><div class="barVal">${format?format(v,r):n(v)}</div></div>`;
-  }).join('') || `<div class="small">${emptyText||'Sin datos para graficar.'}</div>`;
-  return `<div class="chartBox"><div class="chartTitle">${title}</div><div class="bars">${body}</div></div>`;
-}
-function renderCharts(){
-  let rows=metricStoreRows();
-  $('graphLabel').textContent=$('fecha').value;
-  let totalVentas=rows.reduce((a,r)=>a+r.ventas,0), totalMes=rows.reduce((a,r)=>a+r.mes,0), totalAnom=rows.reduce((a,r)=>a+r.anomDia,0), activas=rows.filter(r=>r.active).length;
-  let maxVenta=Math.max(...rows.map(r=>r.ventas),0), baja=rows.filter(r=>maxVenta>0&&r.ventas<maxVenta*.35).length;
-  let sinCierre=rows.filter(r=>r.hrs===0 && r.active).length;
-  $('graphHealth').innerHTML=`<div class="healthCard"><b>Ventas día</b><span>${money(totalVentas)}</span></div><div class="healthCard"><b>Ventas mes</b><span>${money(totalMes)}</span></div><div class="healthCard"><b>Sucursales activas</b><span class="${activas?'badgeGood':'badgeBad'}">${activas}/${rows.length}</span></div><div class="healthCard"><b>Anomalías día</b><span class="${totalAnom?'badgeWarn':'badgeGood'}">${n(totalAnom)}</span></div><div class="healthCard"><b>Tiendas con venta baja</b><span class="${baja?'badgeWarn':'badgeGood'}">${n(baja)}</span></div><div class="healthCard"><b>Activas sin cierre</b><span class="${sinCierre?'badgeWarn':'badgeGood'}">${n(sinCierre)}</span></div>`;
-  $('graphGrid').innerHTML=
-    chartBars('Ventas del día por sucursal', rows, 'ventas', v=>money(v), 'Sin ventas del día en Firebase.')+
-    chartBars('Ventas del mes por sucursal', rows.sort((a,b)=>b.mes-a.mes), 'mes', v=>money(v), 'Sin ventas del mes en Firebase.')+
-    chartBars('Ganancia del día', rows.sort((a,b)=>b.ganancia-a.ganancia), 'ganancia', v=>money(v), 'Sin ganancia calculada.')+
-    chartBars('Gastos del día', rows.sort((a,b)=>b.gastos-a.gastos), 'gastos', v=>money(v), 'Sin gastos del día.')+
-    chartBars('IVA cobrado del día', rows.sort((a,b)=>b.iva-a.iva), 'iva', v=>money(v), 'Sin IVA cobrado.')+
-    chartBars('Cancelaciones del día', rows.sort((a,b)=>b.cancel-a.cancel), 'cancel', v=>money(v), 'Sin cancelaciones.')+
-    chartBars('Anomalías del día', rows.sort((a,b)=>b.anomDia-a.anomDia), 'anomDia', v=>n(v), 'Sin anomalías del día.')+
-    chartBars('Horas operativas', rows.sort((a,b)=>b.hrs-a.hrs), 'hrs', v=>v.toFixed(1)+' h', 'Sin jornadas cerradas para calcular horas.')+
-    chartBars('Tickets del día', rows.sort((a,b)=>b.tickets-a.tickets), 'tickets', v=>n(v), 'Sin tickets del día.');
-}
-
-
-const MODULOS_DEF=[
-  {id:'dashboard',label:'Dashboard',aliases:['dashboard']},
-  {id:'inventario',label:'Inventario',aliases:['inventario']},
-  {id:'conteo',label:'Conteo inventario',aliases:['conteo','conteoInventario','conteoinventario']},
-  {id:'entradas',label:'Entradas',aliases:['entradas']},
-  {id:'salidas',label:'Salidas',aliases:['salidas']},
-  {id:'ventas',label:'Ventas',aliases:['ventas']},
-  {id:'factura',label:'Factura',aliases:['factura']},
-  {id:'resumenDia',label:'Resumen día',aliases:['resumenDia','resumendia','resumen_dia']},
-  {id:'resurtido',label:'Resurtido',aliases:['resurtido']},
-  {id:'monedero_mod',label:'Monedero',aliases:['monedero_mod','monedero']},
-  {id:'libroantibiotico',label:'Libro antibióticos',aliases:['libroantibiotico','libroAntibioticos','libroantibioticos','antibioticos']},
-  {id:'aware',label:'AWARE',aliases:['aware','enara']},
-  {id:'gastos',label:'Gastos',aliases:['gastos']},
-  {id:'baseglobal',label:'Base global',aliases:['baseglobal','baseGlobal','base_global']},
-  {id:'cortes',label:'Cortes',aliases:['cortes','corte']},
-  {id:'efectivo',label:'Conteo efectivo',aliases:['efectivo','conteoEfectivo','conteo_efectivo']},
-  {id:'medicos',label:'Médicos',aliases:['medicos','médicos']},
-  {id:'proveedores',label:'Proveedores',aliases:['proveedores']},
-  {id:'usuarios',label:'Usuarios',aliases:['usuarios']},
-  {id:'requisitos',label:'Requisitos',aliases:['requisitos']},
-  {id:'temperaturas',label:'Temperaturas',aliases:['temperaturas','temperatura']},
-  {id:'limpieza',label:'Bitácora limpieza',aliases:['limpieza','bitacora','bitacoraLimpieza','bitácora limpieza']},
-  {id:'configuracion',label:'Configuración',aliases:['configuracion','configuración','config','settings']},
-  {id:'kardex',label:'Kardex',aliases:['kardex','movimientos']},
-  {id:'destruccion',label:'Destrucción',aliases:['destruccion','destrucción']},
-  {id:'anomalias',label:'Anomalías',aliases:['anomalias','anomalias','anomalías','alerts']},
-  {id:'reportes',label:'Reportes',aliases:['reportes']}
-];
-const MODULOS_BASE=MODULOS_DEF.map(x=>x.id);
-const MODULOS_LABELS=Object.fromEntries(MODULOS_DEF.map(x=>[x.id,x.label]));
-function niceModulo(m){return MODULOS_LABELS[m]||String(m).replace(/_/g,' ').replace(/^\w/,c=>c.toUpperCase())}
-function usuariosPermisoSafe(sid){let p=(DATA.permisos||{})[sid]||{}, names=new Set();Object.keys(p.__users||{}).forEach(u=>names.add(u));Object.keys(p).forEach(k=>{if(!k.startsWith('__')&&k!=='meta') names.add(k)});return [...names].filter(Boolean).sort((a,b)=>a.localeCompare(b,'es'))}
-function permisosStores(){return {...realStores()}}
-function usuariosPermiso(sid){return usuariosPermisoSafe(sid)}
-function readModuleValue(raw,def){for(const k of def.aliases){if(raw&&Object.prototype.hasOwnProperty.call(raw,k))return !!raw[k]}return false}
-function modulesFor(sid,user){let p=(DATA.permisos||{})[sid]||{}, u=p[user]||{}, raw=(u&&u.modules)||{}, base={};MODULOS_DEF.forEach(d=>base[d.id]=readModuleValue(raw,d));return base}
-function renderPermisos(){
-  let stores=permisosStores(), ids=Object.keys(stores).sort((a,b)=>storeName(a,stores[a]).localeCompare(storeName(b,stores[b]),'es'));
-  $('permStatus').textContent=ids.length+' sucursal(es)';
-  $('permPanel').innerHTML=ids.map(sid=>{let users=usuariosPermiso(sid);if(!users.length) users=['admin'];return `<div class="permStore"><div class="permHead"><div><b>${storeName(sid,stores[sid])}</b><br><small>${sid}</small></div><span class="small">${users.length} usuario(s)</span></div>${users.map(u=>renderPermUser(sid,u)).join('')}</div>`}).join('')||'<div class="bar">No hay permisos guardados en Firebase.</div>';
-}
-function renderPermUser(sid,u){
-  let mods=modulesFor(sid,u);
-  let keys=MODULOS_BASE.filter(k=>Object.prototype.hasOwnProperty.call(mods,k));
-  let activos=keys.filter(m=>mods[m]).length, ocultos=keys.length-activos;
-  let inputs=keys.map(m=>`<label class="permItem"><span>${niceModulo(m)}</span><input type="checkbox" data-sid="${sid}" data-user="${u}" data-mod="${m}" ${mods[m]?'checked':''}></label>`).join('');
-  return `<div class="permUser" data-sid="${sid}" data-user="${u}">
-    <button class="permUserBtn" type="button" onclick="togglePermUser(this)">
-      <span><b>👤 ${u}</b><small>${activos} activo(s) · ${ocultos} oculto(s)</small></span>
-      <span class="permArrow">›</span>
-    </button>
-    <div class="permBody">
-      <div class="permGrid">${inputs}</div>
-      <div class="permActions"><button class="miniBtn" onclick="permAll('${sid}','${u}',true)">Mostrar todos</button><button class="miniBtn" onclick="permAll('${sid}','${u}',false)">Ocultar todos</button><button class="saveBtn" onclick="savePerm('${sid}','${u}')">Guardar permisos</button><span class="permMsg" id="msg-${sid}-${u}"></span></div>
-    </div>
-  </div>`
-}
-function togglePermUser(btn){
-  let box=btn.closest('.permUser');
-  if(!box)return;
-  box.classList.toggle('open');
-}
-function permAll(sid,u,val){document.querySelectorAll(`input[data-sid="${sid}"][data-user="${u}"]`).forEach(x=>x.checked=val)}
-async function savePerm(sid,u){
-  let mods={};
-  document.querySelectorAll(`input[data-sid="${sid}"][data-user="${u}"]`).forEach(x=>{
-    let def=MODULOS_DEF.find(d=>d.id===x.dataset.mod); if(!def)return;
-    def.aliases.forEach(a=>mods[a]=x.checked);
-    mods[def.id]=x.checked;
-  });
-  let msg=$(`msg-${sid}-${u}`);
-  try{if(msg)msg.textContent='Guardando...';await patch('/permisos/'+safeKey(sid)+'/'+safeKey(u),{modules:mods,storeId:sid,user:u,updatedAt:new Date().toISOString(),updatedBy:'MONITOR'});await patch('/permisos/'+safeKey(sid)+'/__users/'+safeKey(u),{username:u,display:u,updatedAt:new Date().toISOString(),updatedBy:'MONITOR'});DATA.permisos=await get('/permisos');if(msg)msg.textContent='✅ Guardado en Firebase'}catch(e){console.error(e);if(msg)msg.textContent='❌ Error al guardar: '+(e.message||e)}
-}
-
+function availableDates(){return [...new Set(flattenDaily().map(r=>r.fecha).filter(Boolean))].sort()}
+function ensureDate(){let d=availableDates();if(!$('fecha').value)$('fecha').value=d[d.length-1]||today();else if(d.length&&!d.includes($('fecha').value))$('fecha').value=d[d.length-1]}
+function rowsFor(id=selected){let f=$('fecha').value,u=$('usuario').value;return flattenDaily().filter(r=>(id==='GLOBAL'||r.storeId===id)&&r.fecha===f&&(u==='__ALL__'||r.usuario===u))}
+function renderSelectors(){let rows=flattenDaily().filter(r=>r.fecha===$('fecha').value&&(selected==='GLOBAL'||r.storeId===selected));let users=[...new Set(rows.map(r=>r.usuario).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));let cur=$('usuario').value;$('usuario').innerHTML='<option value="__ALL__">Todos</option>'+users.map(u=>`<option>${escapeHtml(u)}</option>`).join('');$('usuario').value=users.includes(cur)?cur:'__ALL__'}
+function renderStores(){let box=$('stores');box.innerHTML='';let stores=allStores();if(selected!=='GLOBAL'&&!stores[selected])selected='GLOBAL';let add=(id,label,sub)=>{let d=document.createElement('div');d.className='store '+(selected===id?'active':'');d.innerHTML=`<b>${escapeHtml(label)}</b><small>${escapeHtml(sub)}</small>`;d.onclick=()=>{selected=id;render()};box.appendChild(d)};add('GLOBAL','🌎 GLOBAL','Todas las tiendas');Object.values(stores).sort((a,b)=>a.name.localeCompare(b.name,'es')).forEach(s=>add(s.id,'🏪 '+s.name,`${s.id} · ${s.users.size} usuario(s) · ${s.rows.length} reporte(s)`))}
+function sum(rows){let s={ventas:0,servicios:0,serviciosCantidad:0,efectivo:0,tarjeta:0,gastos:0,costo:0,ganancia:0,descuentos:0,monedero:0,iva:0,lineas:0,tickets:0,cancelTotal:0,cancelTickets:0,cancelLineas:0};for(const r of rows){for(const m of ['ventas','servicios','serviciosCantidad','efectivo','tarjeta','gastos','costo','ganancia','descuentos','monedero','iva','lineas','tickets'])s[m]+=metric(r,m);let c=cancel(r);s.cancelTotal+=c.total;s.cancelTickets+=c.tickets;s.cancelLineas+=c.lineas}if(!s.ganancia&&s.ventas&&s.costo)s.ganancia=s.ventas-s.costo;s.efectivoNeto=s.efectivo-s.gastos;return s}
+function card(l,v,h){return `<div class="card"><div class="label">${l}</div><div class="value">${v}</div><div class="hint">${h||''}</div></div>`}
+function renderPanel(){let rows=rowsFor(),s=sum(rows);$('title').textContent=selected==='GLOBAL'?'🌎 GLOBAL':'🏪 '+(allStores()[selected]?.name||selected);$('subtitle').textContent=`Fecha: ${$('fecha').value} · Usuario: ${$('usuario').value==='__ALL__'?'todos':$('usuario').value}`;$('resumeLine').innerHTML=`Reportes: ${n(rows.length)} · Tickets: ${n(s.tickets)} · Líneas: ${n(s.lineas)} · Canceladas: ${n(s.cancelTickets)} (${money(s.cancelTotal)}) · IVA: ${money(s.iva)}`;let cards=[card('Total ventas',money(s.ventas),'Ventas activas del día'),card('Efectivo',money(s.efectivo),'Ventas en efectivo'),card('Tarjeta',money(s.tarjeta),'Ventas con tarjeta'),card('Efectivo neto',money(s.efectivoNeto),'Efectivo - gastos'),card('Gastos',money(s.gastos),'Gastos del día'),card('Ganancia',money(s.ganancia),'Ventas - costo'),card('IVA cobrado',money(s.iva),'IVA enviado desde POS'),card('Descuentos',money(s.descuentos),'Descuentos aplicados'),card('Monedero usado',money(s.monedero),'Saldo usado por clientes'),card('Servicios',money(s.servicios),`${n(s.serviciosCantidad)} servicio(s)`),card('Canceladas',money(s.cancelTotal),`${n(s.cancelTickets)} ticket(s)`),card('Costo vendido',money(s.costo),'Costo de producto vendido')];$('cards').innerHTML=rows.length?cards.join(''):'<div class="bar">Sin reportes para esta fecha, usuario o sucursal.</div>';let by={};for(const r of rows){by[r.usuario]=by[r.usuario]||[];by[r.usuario].push(r)}let html='<thead><tr><th>Usuario</th><th>Reportes</th><th>Ventas</th><th>Efectivo</th><th>Tarjeta</th><th>Gastos</th><th>Ganancia</th><th>IVA</th><th>Canceladas</th></tr></thead><tbody>';let arr=Object.entries(by);html+=arr.map(([u,rs])=>{let x=sum(rs);return `<tr><td>${escapeHtml(u)}</td><td>${n(rs.length)}</td><td>${money(x.ventas)}</td><td>${money(x.efectivo)}</td><td>${money(x.tarjeta)}</td><td>${money(x.gastos)}</td><td>${money(x.ganancia)}</td><td>${money(x.iva)}</td><td>${n(x.cancelTickets)} / ${money(x.cancelTotal)}</td></tr>`}).join('')||'<tr><td colspan="9">Sin detalle por usuario.</td></tr>';html+='</tbody>';$('userTable').innerHTML=html}
+function renderSucursales(){let stores=Object.values(allStores()).sort((a,b)=>a.name.localeCompare(b.name,'es'));$('storeCount').textContent=stores.length+' tienda(s)';let f=$('fecha').value;let html='<thead><tr><th>Tienda</th><th>Usuarios activos</th><th>Ventas día</th><th>Gastos</th><th>IVA</th><th>Última actualización</th></tr></thead><tbody>';html+=stores.map(st=>{let day=st.rows.filter(r=>r.fecha===f);let s=sum(day);let active=[...st.activeUsers].sort().join(', ')||[...st.users].sort().join(', ')||'—';let upd=st.updated?new Date(st.updated).toLocaleString('es-MX'):'—';return `<tr><td><b>${escapeHtml(st.name)}</b><br><small>${escapeHtml(st.id)}</small></td><td>${escapeHtml(active)}</td><td>${money(s.ventas)}</td><td>${money(s.gastos)}</td><td>${money(s.iva)}</td><td>${upd}</td></tr>`}).join('')||'<tr><td colspan="6">Sin tiendas detectadas.</td></tr>';html+='</tbody>';$('storeTable').innerHTML=html}
+function renderMensual(){let ym=ymOf($('fecha').value);$('monthLabel').textContent=ym||'—';let stores=Object.values(allStores()).sort((a,b)=>a.name.localeCompare(b.name,'es'));let html='<thead><tr><th>Tienda</th><th>Reportes</th><th>Ventas mes</th><th>Gastos</th><th>Ganancia</th><th>IVA</th><th>Servicios</th><th>Canceladas</th></tr></thead><tbody>';html+=stores.map(st=>{let rs=st.rows.filter(r=>ymOf(r.fecha)===ym);let s=sum(rs);return `<tr><td><b>${escapeHtml(st.name)}</b><br><small>${escapeHtml(st.id)}</small></td><td>${n(rs.length)}</td><td>${money(s.ventas)}</td><td>${money(s.gastos)}</td><td>${money(s.ganancia)}</td><td>${money(s.iva)}</td><td>${money(s.servicios)}</td><td>${money(s.cancelTotal)}</td></tr>`}).join('')||'<tr><td colspan="8">Sin datos mensuales.</td></tr>';html+='</tbody>';$('monthTable').innerHTML=html}
+function chartBars(title,rows,key,fmt){let max=Math.max(...rows.map(r=>Math.abs(num(r[key]))),0);let body=rows.filter(r=>num(r[key])!==0).map(r=>{let v=num(r[key]),pct=max?Math.max(3,Math.abs(v)/max*100):0;return `<div class="barRow"><div class="barName">${escapeHtml(r.name)}</div><div class="barTrack"><div class="barFill" style="width:${pct}%"></div></div><div class="barVal">${fmt?fmt(v):n(v)}</div></div>`}).join('')||'<div class="small">Sin datos para graficar.</div>';return `<div class="chartBox"><div class="chartTitle">${title}</div>${body}</div>`}
+function renderGraficos(){let f=$('fecha').value,ym=ymOf(f);$('graphLabel').textContent=f;let rows=Object.values(allStores()).map(st=>{let day=sum(st.rows.filter(r=>r.fecha===f));let month=sum(st.rows.filter(r=>ymOf(r.fecha)===ym));return {name:st.name,ventas:day.ventas,gastos:day.gastos,ganancia:day.ganancia,iva:day.iva,mes:month.ventas}});$('graphGrid').innerHTML=chartBars('Ventas del día',rows.slice().sort((a,b)=>b.ventas-a.ventas),'ventas',money)+chartBars('Ventas del mes',rows.slice().sort((a,b)=>b.mes-a.mes),'mes',money)+chartBars('Ganancia del día',rows.slice().sort((a,b)=>b.ganancia-a.ganancia),'ganancia',money)+chartBars('Gastos del día',rows.slice().sort((a,b)=>b.gastos-a.gastos),'gastos',money)+chartBars('IVA del día',rows.slice().sort((a,b)=>b.iva-a.iva),'iva',money)}
 function labels(){document.querySelectorAll('table').forEach(t=>{let hs=[...t.querySelectorAll('thead th')].map(x=>x.textContent);t.querySelectorAll('tbody tr').forEach(tr=>[...tr.children].forEach((td,i)=>td.setAttribute('data-label',hs[i]||'')))})}
-function render(){renderSelectors();renderStores();renderPanel();renderTables();renderAnom();renderCharts();renderPermisos();labels()}
-async function refresh(){try{$('status2').textContent='Consultando';$('dot2').className='dot warn';DATA.diarios=await get('/reportes_diarios');DATA.satelite=await get('/satelite');DATA.mensuales=await get('/reportes_mensuales');DATA.permisos=await get('/permisos');let a1=await get('/anom_alerts');let a2=await get('/anomalias');DATA.anomalias={__anom_alerts:a1,__anomalias:a2};ensureDate();$('status2').textContent='Conectado';$('dot2').className='dot ok';$('updated').textContent='Última actualización: '+new Date().toLocaleString('es-MX');render()}catch(e){$('status2').textContent='Sin conexión';$('dot2').className='dot';console.error(e)}}
-function setTab(n){currentTab=n;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===n));['panel','sucursales','mensual','anomalias','graficos','permisos','config'].forEach(k=>$('tab-'+k).classList.toggle('hidden',k!==n));document.querySelector('.layout').classList.toggle('noSide',n!=='config');document.querySelector('.layout').classList.toggle('configMode',n==='config');labels();window.scrollTo({top:0,behavior:'smooth'})}
-document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>setTab(t.dataset.tab));document.querySelectorAll('.homeCard').forEach(c=>c.onclick=()=>{document.body.classList.add('mobileViewing');setTab(c.dataset.go)});$('mobileBack').onclick=()=>{document.body.classList.remove('mobileViewing');window.scrollTo({top:0,behavior:'smooth'})};$('fecha').onchange=()=>{render();};$('usuario').onchange=render;$('saveDbUrl').onclick=saveDbUrl;loadDbUrl();$('fecha').value=new Date().toISOString().slice(0,10);setTab('panel');refresh();
-</script></body></html>
+function render(){renderSelectors();renderStores();renderPanel();renderSucursales();renderMensual();renderGraficos();labels()}
+async function refresh(fromSave=false){let msg=$('dbUrlMsg');let base=fbBase();if(!base){DATA.diarios={};setStatus('Configura URL','');msg.textContent='Pega la URL Firebase del cliente para consultar reportes.';render();return}if(!validFirebaseUrl(base)){setStatus('URL inválida','warn');msg.textContent='⚠️ URL inválida. Debe ser Firebase Realtime Database.';return}try{setStatus('Consultando','warn');DATA.diarios=await get('/reportes_diarios');ensureDate();setStatus('Conectado','ok');$('updated').textContent='Última actualización: '+new Date().toLocaleString('es-MX');msg.textContent=(fromSave?'✅ URL guardada y conexión validada.':'✅ Conexión activa.')+' Ruta usada: /reportes_diarios';render()}catch(e){console.error(e);DATA.diarios={};setStatus('Sin conexión','');msg.textContent='❌ No se pudo leer /reportes_diarios. Revisa URL y reglas Firebase. '+(e.message||e);render()}}
+function setTab(nm){currentTab=nm;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===nm));['panel','sucursales','mensual','graficos','config'].forEach(k=>$('tab-'+k).classList.toggle('hidden',k!==nm));labels();window.scrollTo({top:0,behavior:'smooth'})}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>setTab(t.dataset.tab));
+document.querySelectorAll('.homeCard').forEach(c=>c.onclick=()=>{document.body.classList.add('mobileViewing');setTab(c.dataset.go)});
+$('mobileBack').onclick=()=>{document.body.classList.remove('mobileViewing');window.scrollTo({top:0,behavior:'smooth'})};
+$('fecha').onchange=render;$('usuario').onchange=render;$('saveDbUrl').onclick=saveDbUrl;$('reloadData').onclick=()=>refresh(false);
+$('dburl').addEventListener('paste',()=>setTimeout(()=>saveDbUrl(),80));
+$('dburl').addEventListener('change',saveDbUrl);
+loadDbUrl();$('fecha').value=today();refresh(false);setInterval(()=>refresh(false),120000);
+
+</script>
+</body></html>
