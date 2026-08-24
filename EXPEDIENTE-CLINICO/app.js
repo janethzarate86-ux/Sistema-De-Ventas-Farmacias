@@ -5,8 +5,18 @@ const APP = {
   auth: null,
   selectedPatientId: "",
   selectedPatient: null,
+  patientPickerTarget: "consultation",
   recentPatients: [],
   inventoryRows: [],
+  medicalConfig: null,
+  folioControl: null,
+  prescriptionLines: [],
+  prescriptionSearchRows: [],
+  prescriptionHistory: [],
+  selectedPrescription: null,
+  folioEditEnabled: false,
+  crestDraft: "",
+  signatureDraft: "",
   backupHandle: null,
   toastTimer: null
 };
@@ -62,6 +72,8 @@ function validateConfig(raw) {
   cfg.firebaseDatabaseUrl = String(cfg.firebaseDatabaseUrl).replace(/\/+$/, "");
   cfg.storeId = firebaseKey(cfg.storeId);
   cfg.pharmacyName = text(cfg.pharmacyName, "Farmacia");
+  cfg.pharmacyAddress = String(cfg.pharmacyAddress || cfg.direccionFarmacia || "").trim().slice(0, 300);
+  cfg.pharmacyPhone = String(cfg.pharmacyPhone || cfg.telefonoFarmacia || "").trim().slice(0, 30);
   return cfg;
 }
 
@@ -185,12 +197,13 @@ async function restoreBackupHandle() {
 
 async function backupPatient(patientId) {
   if (!patientId) return;
-  const [patient, consultations, references] = await Promise.all([
+  const [patient, consultations, references, prescriptions] = await Promise.all([
     db(`expediente_clinico/${APP.config.storeId}/pacientes/${patientId}`),
     db(`expediente_clinico/${APP.config.storeId}/consultas/${patientId}`, { query: { orderBy: jsonQueryValue("createdAt"), limitToLast: 200 } }),
-    db(`expediente_clinico/${APP.config.storeId}/referencias/${patientId}`, { query: { orderBy: jsonQueryValue("createdAt"), limitToLast: 200 } })
+    db(`expediente_clinico/${APP.config.storeId}/referencias/${patientId}`, { query: { orderBy: jsonQueryValue("createdAt"), limitToLast: 200 } }),
+    db(`expediente_clinico/${APP.config.storeId}/recetas/${patientId}`, { query: { orderBy: jsonQueryValue("createdAt"), limitToLast: 200 } }).catch(() => ({}))
   ]);
-  const snapshot = { schema: "macroxel-clinical-backup-v1", patientId, generatedAt: isoNow(), pharmacyName: APP.config.pharmacyName, patient: patient || {}, consultations: consultations || {}, references: references || {} };
+  const snapshot = { schema: "macroxel-clinical-backup-v2", patientId, generatedAt: isoNow(), pharmacyName: APP.config.pharmacyName, patient: patient || {}, consultations: consultations || {}, references: references || {}, prescriptions: prescriptions || {} };
   await idbPut("snapshots", snapshot);
   if (!APP.backupHandle) return;
   let permission = await APP.backupHandle.queryPermission({ mode: "readwrite" }).catch(() => "denied");
@@ -251,6 +264,8 @@ function showView(name) {
   document.querySelectorAll(".nav-btn").forEach((button) => button.classList.toggle("active", button.dataset.view === name));
   if (name === "inventory" && !APP.inventoryRows.length) loadFeaturedInventory();
   if (name === "records" && !APP.recentPatients.length) loadRecentPatients();
+  if (name === "prescriptions") preparePrescriptionModule().catch((error) => toast(error.message, "error"));
+  if (name === "clinical-settings") loadMedicalSettings().catch((error) => toast(error.message, "error"));
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -280,25 +295,31 @@ async function searchPatients(term, target, picker = false) {
 }
 
 async function openPatient(patientId) {
-  const [patient, consultations, references] = await Promise.all([
+  const [patient, consultations, references, prescriptions] = await Promise.all([
     db(`expediente_clinico/${APP.config.storeId}/pacientes/${patientId}`),
     db(`expediente_clinico/${APP.config.storeId}/consultas/${patientId}`, { query: { orderBy: jsonQueryValue("createdAt"), limitToLast: 50 } }),
-    db(`expediente_clinico/${APP.config.storeId}/referencias/${patientId}`, { query: { orderBy: jsonQueryValue("createdAt"), limitToLast: 50 } })
+    db(`expediente_clinico/${APP.config.storeId}/referencias/${patientId}`, { query: { orderBy: jsonQueryValue("createdAt"), limitToLast: 50 } }),
+    db(`expediente_clinico/${APP.config.storeId}/recetas/${patientId}`, { query: { orderBy: jsonQueryValue("createdAt"), limitToLast: 50 } }).catch(() => ({}))
   ]);
   if (!patient) throw new Error("El expediente ya no está disponible.");
   APP.selectedPatientId = patientId;
   APP.selectedPatient = patient;
   $("consult-patient-label").value = `${patient.name} · ${patientId}`;
   $("reference-patient-label").value = `${patient.name} · ${patientId}`;
-  renderPatientDetail(patientId, patient, consultations || {}, references || {});
+  $("prescription-patient-label").value = `${patient.name} · ${patientId}`;
+  $("prescription-patient-birth").value = patient.birthDate || "";
+  $("prescription-patient-age").value = ageFromBirth(patient.birthDate);
+  renderPatientDetail(patientId, patient, consultations || {}, references || {}, prescriptions || {});
+  renderPrescriptionPreview();
   showView("records");
 }
 
-function renderPatientDetail(id, patient, consultations, references) {
+function renderPatientDetail(id, patient, consultations, references, prescriptions = {}) {
   const notes = Object.entries(consultations).map(([entryId, item]) => ({ entryId, kind: "note", ...item }));
   const refs = Object.entries(references).map(([entryId, item]) => ({ entryId, kind: "reference", ...item }));
-  const timeline = [...notes, ...refs].sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
-  $("patient-detail").innerHTML = `<div class="patient-header"><div><span class="patient-id">${esc(id)}</span><h3>${esc(patient.name)}</h3><p>${esc(formatDate(patient.birthDate))} · ${esc(patient.sex)}</p></div><div class="patient-actions"><button class="btn primary" type="button" data-patient-action="consult">Nueva consulta</button><button class="btn ghost" type="button" data-patient-action="export">Exportar Excel</button></div></div>
+  const prescriptionsRows = Object.entries(prescriptions).map(([entryId, item]) => ({ entryId, kind: "prescription", ...item }));
+  const timeline = [...notes, ...refs, ...prescriptionsRows].sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+  $("patient-detail").innerHTML = `<div class="patient-header"><div><span class="patient-id">${esc(id)}</span><h3>${esc(patient.name)}</h3><p>${esc(formatDate(patient.birthDate))} · ${esc(patient.sex)}</p></div><div class="patient-actions"><button class="btn primary" type="button" data-patient-action="consult">Nueva consulta</button><button class="btn primary" type="button" data-patient-action="prescription">Nueva receta</button><button class="btn ghost" type="button" data-patient-action="export">Exportar Excel</button></div></div>
     <div class="patient-grid">
       ${dataCard("Teléfono", patient.phone)}${dataCard("Correo", patient.email)}${dataCard("Domicilio", patient.address)}
       ${dataCard("Grupo sanguíneo", patient.bloodType)}${dataCard("Alergias", patient.allergies)}${dataCard("Padecimientos crónicos", patient.chronicConditions)}
@@ -309,9 +330,11 @@ function renderPatientDetail(id, patient, consultations, references) {
 function dataCard(label, value) { return `<div class="data-card"><span>${esc(label)}</span><b>${esc(text(value))}</b></div>`; }
 function timelineItem(item) {
   const reference = item.kind === "reference";
-  const title = reference ? `Referencia ${text(item.priority, "ORDINARIA")}` : `${text(item.noteType, "NOTA MÉDICA")} · ${text(item.folio)}`;
-  const detail = reference ? `${text(item.recipient)}\n${text(item.reason)}` : `${text(item.diagnosis)}\nPlan: ${text(item.treatment)}`;
-  return `<article class="timeline-item ${reference ? "reference" : ""}"><div class="meta"><span>${esc(formatDate(item.clinicalDate || item.createdAt, true))}</span><span>${esc(reference ? item.referringDoctor : `${item.doctorName} · Céd. ${item.doctorLicense}`)}</span></div><h4>${esc(title)}</h4><p>${esc(detail)}</p></article>`;
+  const prescription = item.kind === "prescription";
+  const title = reference ? `Referencia ${text(item.priority, "ORDINARIA")}` : prescription ? `Receta ${text(item.folio)}` : `${text(item.noteType, "NOTA MÉDICA")} · ${text(item.folio)}`;
+  const detail = reference ? `${text(item.recipient)}\n${text(item.reason)}` : prescription ? `${text(item.type, "ORDINARIA")} · ${(item.items || []).map((line) => line.genericName).filter(Boolean).join(", ")}` : `${text(item.diagnosis)}\nPlan: ${text(item.treatment)}`;
+  const professional = reference ? item.referringDoctor : prescription ? `${item.doctor?.name || item.doctorName || "MÉDICO"} · Céd. ${item.doctor?.license || item.doctorLicense || "—"}` : `${item.doctorName} · Céd. ${item.doctorLicense}`;
+  return `<article class="timeline-item ${reference ? "reference" : prescription ? "prescription" : ""}"><div class="meta"><span>${esc(formatDate(item.clinicalDate || item.issuedAt || item.createdAt, true))}</span><span>${esc(professional)}</span></div><h4>${esc(title)}</h4><p>${esc(detail)}</p></article>`;
 }
 
 function patientPayload() {
@@ -406,6 +429,9 @@ function prepareForms() {
   if (APP.selectedPatient) {
     $("consult-patient-label").value = `${APP.selectedPatient.name} · ${APP.selectedPatientId}`;
     $("reference-patient-label").value = `${APP.selectedPatient.name} · ${APP.selectedPatientId}`;
+    $("prescription-patient-label").value = `${APP.selectedPatient.name} · ${APP.selectedPatientId}`;
+    $("prescription-patient-birth").value = APP.selectedPatient.birthDate || "";
+    $("prescription-patient-age").value = ageFromBirth(APP.selectedPatient.birthDate);
   }
 }
 
@@ -501,7 +527,8 @@ async function exportPatient() {
   const patientRows = [["CAMPO", "VALOR"], ...Object.entries(data.patient || {}).map(([key, value]) => [key, typeof value === "object" ? JSON.stringify(value) : value])];
   const noteRows = [["ID", "FECHA", "TIPO", "MÉDICO", "CÉDULA", "MOTIVO", "DIAGNÓSTICO", "TRATAMIENTO", "SEGUIMIENTO"], ...Object.entries(data.consultations || {}).map(([id, n]) => [id, n.clinicalDate, n.noteType, n.doctorName, n.doctorLicense, n.reason, n.diagnosis, n.treatment, n.followup])];
   const refRows = [["ID", "FECHA", "PRIORIDAD", "RECEPTOR", "MOTIVO", "DIAGNÓSTICO", "TRATAMIENTO", "MÉDICO REMITENTE"], ...Object.entries(data.references || {}).map(([id, r]) => [id, r.clinicalDate, r.priority, r.recipient, r.reason, r.diagnosis, r.treatment, r.referringDoctor])];
-  downloadBlob(xlsxBlob([{ name: "PACIENTE", rows: patientRows }, { name: "CONSULTAS", rows: noteRows }, { name: "REFERENCIAS", rows: refRows }]), `EXPEDIENTE_${safeFile(APP.selectedPatientId)}_${dateKey()}.xlsx`);
+  const prescriptionRows = [["ID", "FOLIO", "FECHA", "TIPO", "MÉDICO", "CÉDULA", "DIAGNÓSTICO", "MEDICAMENTOS"], ...Object.entries(data.prescriptions || {}).map(([id, r]) => [id, r.folio, r.issuedAt, r.type, r.doctor?.name, r.doctor?.license, r.diagnosis, (r.items || []).map((line) => `${line.genericName} ${line.dose} ${line.frequency} ${line.duration}`).join(" | ")])];
+  downloadBlob(xlsxBlob([{ name: "PACIENTE", rows: patientRows }, { name: "CONSULTAS", rows: noteRows }, { name: "REFERENCIAS", rows: refRows }, { name: "RECETAS", rows: prescriptionRows }]), `EXPEDIENTE_${safeFile(APP.selectedPatientId)}_${dateKey()}.xlsx`);
   toast("Expediente exportado a Excel.", "ok");
 }
 
@@ -512,6 +539,387 @@ function exportInventory() {
   toast("Resultados de inventario exportados a Excel.", "ok");
 }
 
+function ageFromBirth(value) {
+  const birth = new Date(`${String(value || "").slice(0, 10)}T12:00:00`);
+  if (Number.isNaN(birth.getTime())) return "";
+  const today = new Date();
+  let years = today.getFullYear() - birth.getFullYear();
+  const beforeBirthday = today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate());
+  if (beforeBirthday) years -= 1;
+  return years >= 0 && years < 130 ? `${years} año(s)` : "";
+}
+
+function safeDataImage(value) {
+  const raw = String(value || "");
+  return /^data:image\/(?:png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(raw) && raw.length <= 700000 ? raw : "";
+}
+
+function defaultMedicalConfig() {
+  return {
+    doctorName: "", doctorLicense: "", doctorProfession: "MÉDICO CIRUJANO", doctorSpecialty: "MEDICINA GENERAL",
+    doctorUniversity: "", pharmacyPhone: APP.config?.pharmacyPhone || "", universityCrest: "", doctorSignature: ""
+  };
+}
+
+function defaultFolioControl() {
+  return { prefix: "RX", nextNumber: 1, lastIssued: 0, width: 6, updatedAt: isoNow(), schemaVersion: 1 };
+}
+
+function normalizedFolioControl(value) {
+  const raw = value && typeof value === "object" ? value : {};
+  const prefix = normalize(raw.prefix || "RX").replace(/\s+/g, "-").slice(0, 12) || "RX";
+  const lastIssued = Math.max(0, Math.trunc(Number(raw.lastIssued || 0) || 0));
+  const nextNumber = Math.max(lastIssued + 1, Math.trunc(Number(raw.nextNumber || 1) || 1));
+  return { prefix, nextNumber, lastIssued, width: Math.min(10, Math.max(3, Math.trunc(Number(raw.width || 6) || 6))), updatedAt: raw.updatedAt || isoNow(), updatedBy: raw.updatedBy || "", schemaVersion: 1 };
+}
+
+function formatPrescriptionFolio(control = APP.folioControl, number = null) {
+  const cfg = normalizedFolioControl(control);
+  const value = number === null ? cfg.nextNumber : Math.max(1, Math.trunc(Number(number) || 1));
+  return `${cfg.prefix}-${String(value).padStart(cfg.width, "0")}`;
+}
+
+function medicalConfigComplete(config = APP.medicalConfig) {
+  return !!(config?.doctorName && config?.doctorLicense && config?.doctorProfession && config?.doctorUniversity && config?.pharmacyPhone && APP.config?.pharmacyAddress);
+}
+
+function firebaseUrlForPath(path) {
+  const cleanPath = String(path).split("/").filter(Boolean).map(firebaseKey).join("/");
+  const url = new URL(`${APP.config.firebaseDatabaseUrl}/${cleanPath}.json`);
+  url.searchParams.set("auth", APP.auth.idToken);
+  return url;
+}
+
+async function updateFolioTransaction(mutator, attempts = 6) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    if (Date.now() > Number(APP.auth?.expiresAt || 0) - 60000) await refreshAuth();
+    const path = `expediente_clinico/${APP.config.storeId}/folios_recetas/control`;
+    const url = firebaseUrlForPath(path);
+    const currentResponse = await fetch(url, { headers: { "X-Firebase-ETag": "true", "Cache-Control": "no-store" }, cache: "no-store" });
+    if (!currentResponse.ok) throw new Error(`No fue posible consultar el control de folios (${currentResponse.status}).`);
+    const etag = currentResponse.headers.get("etag");
+    if (!etag) throw new Error("Firebase no devolvió el control de concurrencia de folios.");
+    const current = normalizedFolioControl(await currentResponse.json().catch(() => null));
+    const next = normalizedFolioControl(await mutator({ ...current }));
+    const saveResponse = await fetch(url, { method: "PUT", headers: { "Content-Type": "application/json", "If-Match": etag }, body: JSON.stringify(next), cache: "no-store" });
+    if (saveResponse.status === 412) continue;
+    if (!saveResponse.ok) throw new Error(`No fue posible reservar el folio (${saveResponse.status}).`);
+    APP.folioControl = next;
+    return { before: current, after: next };
+  }
+  throw new Error("Otro usuario actualizó los folios al mismo tiempo. Intenta nuevamente.");
+}
+
+function setImagePreview(id, value) {
+  const image = $(id);
+  const safe = safeDataImage(value);
+  image.hidden = !safe;
+  if (safe) image.src = safe;
+  else image.removeAttribute("src");
+}
+
+async function optimizeImageFile(file, maxSide = 520) {
+  if (!file || !/^image\/(?:png|jpeg|webp)$/i.test(file.type || "")) throw new Error("Selecciona una imagen PNG, JPG o WebP.");
+  if (file.size > 5 * 1024 * 1024) throw new Error("La imagen supera 5 MB.");
+  const url = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = () => reject(new Error("No se pudo leer la imagen.")); image.src = url; });
+    const scale = Math.min(1, maxSide / Math.max(image.naturalWidth || 1, image.naturalHeight || 1));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale)); canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const ctx = canvas.getContext("2d", { alpha: true }); ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const data = canvas.toDataURL("image/png");
+    if (!safeDataImage(data)) throw new Error("La imagen optimizada todavía es demasiado grande.");
+    return data;
+  } finally { URL.revokeObjectURL(url); }
+}
+
+function fillMedicalSettingsForm() {
+  const cfg = { ...defaultMedicalConfig(), ...(APP.medicalConfig || {}) };
+  $("settings-doctor-name").value = cfg.doctorName || "";
+  $("settings-doctor-license").value = cfg.doctorLicense || "";
+  $("settings-doctor-profession").value = cfg.doctorProfession || "MÉDICO CIRUJANO";
+  $("settings-doctor-specialty").value = cfg.doctorSpecialty || "MEDICINA GENERAL";
+  $("settings-doctor-university").value = cfg.doctorUniversity || "";
+  $("settings-pharmacy-address").value = APP.config?.pharmacyAddress || "";
+  $("settings-pharmacy-phone").value = cfg.pharmacyPhone || APP.config?.pharmacyPhone || "";
+  APP.crestDraft = safeDataImage(cfg.universityCrest);
+  APP.signatureDraft = safeDataImage(cfg.doctorSignature);
+  setImagePreview("settings-university-crest-preview", APP.crestDraft);
+  setImagePreview("settings-doctor-signature-preview", APP.signatureDraft);
+  const folio = normalizedFolioControl(APP.folioControl);
+  $("settings-folio-prefix").value = folio.prefix;
+  $("settings-folio-next").value = String(folio.nextNumber);
+  $("settings-folio-width").value = String(folio.width);
+  $("prescription-next-folio").textContent = `Próximo folio: ${formatPrescriptionFolio(folio)}`;
+  const complete = medicalConfigComplete(cfg);
+  $("prescription-config-badge").textContent = complete ? "Configuración completa" : "Completar configuración";
+  $("prescription-config-badge").className = `badge ${complete ? "ok" : "warn"}`;
+  if ($("doctor-name") && !$("doctor-name").value) $("doctor-name").value = cfg.doctorName || "";
+  if ($("doctor-license") && !$("doctor-license").value) $("doctor-license").value = cfg.doctorLicense || "";
+  if ($("doctor-specialty") && !$("doctor-specialty").value) $("doctor-specialty").value = cfg.doctorSpecialty || "";
+}
+
+async function loadMedicalSettings() {
+  const [config, folio] = await Promise.all([
+    db(`expediente_clinico/${APP.config.storeId}/configuracion_medicos/${APP.auth.uid}`).catch(() => null),
+    db(`expediente_clinico/${APP.config.storeId}/folios_recetas/control`).catch(() => null)
+  ]);
+  APP.medicalConfig = { ...defaultMedicalConfig(), ...(config || {}) };
+  APP.folioControl = normalizedFolioControl(folio);
+  fillMedicalSettingsForm();
+  renderPrescriptionPreview();
+  return APP.medicalConfig;
+}
+
+function enableFolioEditing(enabled = true) {
+  APP.folioEditEnabled = !!enabled;
+  ["settings-folio-prefix", "settings-folio-next", "settings-folio-width"].forEach((id) => { $(id).readOnly = !enabled; });
+  $("folio-edit-confirmation").hidden = !enabled;
+  $("btn-enable-folio-edit").textContent = enabled ? "Edición habilitada" : "Editar control";
+  $("btn-enable-folio-edit").disabled = enabled;
+}
+
+async function saveMedicalSettings(event) {
+  event.preventDefault();
+  if (!APP.config.pharmacyAddress) throw new Error("La dirección no llegó desde el sistema principal. Regenera macroxel-config.json desde Configuración.");
+  const config = {
+    doctorName: $("settings-doctor-name").value.trim(), doctorLicense: $("settings-doctor-license").value.trim(),
+    doctorProfession: $("settings-doctor-profession").value.trim(), doctorSpecialty: $("settings-doctor-specialty").value.trim(),
+    doctorUniversity: $("settings-doctor-university").value.trim(), pharmacyPhone: $("settings-pharmacy-phone").value.trim(),
+    universityCrest: safeDataImage(APP.crestDraft), doctorSignature: safeDataImage(APP.signatureDraft),
+    updatedAt: isoNow(), updatedBy: APP.auth.uid, schemaVersion: 1
+  };
+  if (!medicalConfigComplete(config)) throw new Error("Completa nombre, cédula, profesión, universidad, dirección y teléfono de la farmacia.");
+  if (APP.folioEditEnabled) {
+    if (!$("settings-folio-confirm").checked || normalize($("settings-folio-phrase").value) !== "CAMBIAR FOLIO") throw new Error("Confirma el cambio y escribe CAMBIAR FOLIO.");
+    const prefix = normalize($("settings-folio-prefix").value).replace(/\s+/g, "-").slice(0, 12);
+    const nextNumber = Math.trunc(Number($("settings-folio-next").value));
+    const width = Math.trunc(Number($("settings-folio-width").value));
+    if (!/^[A-Z0-9-]{1,12}$/.test(prefix) || !Number.isInteger(nextNumber) || nextNumber < 1 || width < 3 || width > 10) throw new Error("El control de folios no es válido.");
+    await updateFolioTransaction((current) => {
+      if (nextNumber <= current.lastIssued) throw new Error(`El siguiente folio debe ser mayor a ${current.lastIssued}; los folios emitidos no pueden reutilizarse.`);
+      return { ...current, prefix, nextNumber, width, updatedAt: isoNow(), updatedBy: APP.auth.uid };
+    });
+  }
+  await commitEvent({ id: newId("evt_medical_config"), createdAt: config.updatedAt, operations: [
+    { method: "PUT", path: `expediente_clinico/${APP.config.storeId}/configuracion_medicos/${APP.auth.uid}`, body: config },
+    { method: "PUT", path: `expediente_clinico/${APP.config.storeId}/auditoria/${newId("audit")}`, body: { action: "PRESCRIPTION_SETTINGS_UPDATED", createdAt: config.updatedAt, uid: APP.auth.uid, email: APP.auth.email } }
+  ]});
+  APP.medicalConfig = config;
+  enableFolioEditing(false);
+  $("settings-folio-confirm").checked = false; $("settings-folio-phrase").value = ""; $("settings-confirm").checked = false;
+  fillMedicalSettingsForm(); renderPrescriptionPreview();
+  toast("Configuración médica guardada correctamente.", "ok");
+}
+
+function blankPrescriptionLine(product = null) {
+  return {
+    lineId: newId("rxline"), inventoryId: product?.id || "", productCode: product?.codigo || "", genericName: product?.generica || product?.nombre || "",
+    brandName: product?.distintiva || "", presentation: product?.presentacion || "", concentration: "", pharmaceuticalForm: "", route: "ORAL",
+    dose: "", frequency: "", duration: "", quantityToDispense: "1", instructions: "", price: Number(product?.precioVenta || 0) || 0
+  };
+}
+
+function renderPrescriptionLines() {
+  const target = $("prescription-lines");
+  if (!APP.prescriptionLines.length) { target.innerHTML = '<div class="empty">Agrega al menos un medicamento.</div>'; renderPrescriptionPreview(); return; }
+  const routeOptions = ["ORAL", "TÓPICA", "OFTÁLMICA", "ÓTICA", "INHALADA", "INTRAMUSCULAR", "INTRAVENOSA", "SUBCUTÁNEA", "RECTAL", "VAGINAL", "OTRA"];
+  target.innerHTML = APP.prescriptionLines.map((line, index) => `<article class="rx-line" data-rx-line-id="${esc(line.lineId)}"><div class="rx-line-head"><div><b>Medicamento ${index + 1}</b><span>${line.productCode ? `Vinculado al inventario · ${esc(line.productCode)}` : "Captura manual · no se enviará al carrito hasta vincularlo"}</span></div><button class="link-btn" type="button" data-remove-rx-line="${esc(line.lineId)}">Eliminar</button></div><div class="rx-line-grid">
+    <label class="span-2">Denominación genérica<input data-rx-field="genericName" value="${esc(line.genericName)}" required maxlength="220"></label><label class="span-2">Denominación distintiva<input data-rx-field="brandName" value="${esc(line.brandName)}" maxlength="220"></label>
+    <label>Forma farmacéutica<input data-rx-field="pharmaceuticalForm" value="${esc(line.pharmaceuticalForm)}" required maxlength="100" placeholder="TABLETA"></label><label>Concentración<input data-rx-field="concentration" value="${esc(line.concentration)}" required maxlength="100" placeholder="500 MG"></label><label class="span-2">Presentación / contenido<input data-rx-field="presentation" value="${esc(line.presentation)}" required maxlength="180" placeholder="CAJA CON 20 TABLETAS"></label>
+    <label>Vía<select data-rx-field="route">${routeOptions.map((route) => `<option${route === line.route ? " selected" : ""}>${route}</option>`).join("")}</select></label><label>Dosis<input data-rx-field="dose" value="${esc(line.dose)}" required maxlength="120" placeholder="1 TABLETA"></label><label>Frecuencia<input data-rx-field="frequency" value="${esc(line.frequency)}" required maxlength="120" placeholder="CADA 8 HORAS"></label><label>Duración<input data-rx-field="duration" value="${esc(line.duration)}" required maxlength="120" placeholder="7 DÍAS"></label>
+    <label>Cantidad a surtir<input data-rx-field="quantityToDispense" type="number" min="1" max="999" step="1" value="${esc(line.quantityToDispense)}" required></label><label class="span-3">Indicaciones específicas<textarea data-rx-field="instructions" maxlength="600" placeholder="Tomar con alimentos, precauciones u horario">${esc(line.instructions)}</textarea></label>
+  </div></article>`).join("");
+  renderPrescriptionPreview();
+}
+
+function updatePrescriptionLineFromElement(element) {
+  const container = element.closest("[data-rx-line-id]"); if (!container) return;
+  const line = APP.prescriptionLines.find((item) => item.lineId === container.dataset.rxLineId); if (!line) return;
+  line[element.dataset.rxField] = element.value;
+  renderPrescriptionPreview();
+}
+
+async function searchPrescriptionProducts() {
+  const term = $("prescription-product-search").value.trim(); const key = normalize(term);
+  if (key.length < 2) throw new Error("Escribe al menos dos caracteres o escanea un código.");
+  const numeric = /^\d+$/.test(digits(term)) && digits(term).length >= 4;
+  const start = numeric ? digits(term) : key;
+  const data = await db(`expediente_clinico/${APP.config.storeId}/inventario/productos`, { query: { orderBy: jsonQueryValue(numeric ? "codigo" : "searchKey"), startAt: jsonQueryValue(start), endAt: jsonQueryValue(`${start}\uf8ff`), limitToFirst: 20 } });
+  APP.prescriptionSearchRows = inventoryToArray(data).filter((row) => Number(row.existencia || 0) > 0);
+  const target = $("prescription-product-results"); target.hidden = false;
+  target.innerHTML = APP.prescriptionSearchRows.length ? APP.prescriptionSearchRows.map((row) => `<button class="rx-search-item" type="button" data-add-rx-product="${esc(row.id)}"><span><b>${esc(row.generica || row.nombre || "PRODUCTO")}</b><small>${esc(row.distintiva || "")} · ${esc(row.presentacion || "")} · ${esc(row.codigo || "")}</small></span><strong>${esc(Number(row.existencia) || 0)} pz</strong></button>`).join("") : '<div class="empty">No hay coincidencias disponibles.</div>';
+}
+
+function ageNumber(value) { const match = String(value || "").match(/\d+/); return match ? Number(match[0]) : 0; }
+
+function prescriptionDraft() {
+  const issue = $("prescription-datetime")?.value ? new Date($("prescription-datetime").value).toISOString() : isoNow();
+  return {
+    id: "", folio: formatPrescriptionFolio(), type: $("prescription-type")?.value || "ORDINARIA", issuedAt: issue,
+    validUntil: $("prescription-valid-until")?.value || "", diagnosis: $("prescription-diagnosis")?.value.trim() || "",
+    nonPharmacological: $("prescription-nonpharma")?.value.trim() || "", patientId: APP.selectedPatientId,
+    patient: APP.selectedPatient ? { name: APP.selectedPatient.name, birthDate: APP.selectedPatient.birthDate, age: ageNumber(ageFromBirth(APP.selectedPatient.birthDate)), weightKg: $("prescription-patient-weight")?.value || "", phone: APP.selectedPatient.phone || "" } : {},
+    doctor: APP.medicalConfig ? { name: APP.medicalConfig.doctorName, license: APP.medicalConfig.doctorLicense, profession: APP.medicalConfig.doctorProfession, specialty: APP.medicalConfig.doctorSpecialty, university: APP.medicalConfig.doctorUniversity, crest: APP.medicalConfig.universityCrest, signature: APP.medicalConfig.doctorSignature } : {},
+    pharmacy: { name: APP.config?.pharmacyName || "Farmacia", address: APP.config?.pharmacyAddress || "", phone: APP.medicalConfig?.pharmacyPhone || APP.config?.pharmacyPhone || "" },
+    items: APP.prescriptionLines.map((line) => ({ ...line }))
+  };
+}
+
+function prescriptionPaperHtml(recipe) {
+  const r = recipe || prescriptionDraft(); const crest = safeDataImage(r.doctor?.crest); const signature = safeDataImage(r.doctor?.signature);
+  const medicineRows = (r.items || []).length ? r.items.map((line, index) => `<tr><td>${index + 1}</td><td><b>${esc(line.genericName || "MEDICAMENTO")}</b>${line.brandName ? `<br>${esc(line.brandName)}` : ""}<br>${esc([line.pharmaceuticalForm, line.concentration, line.presentation].filter(Boolean).join(" · "))}</td><td>${esc([`VÍA ${line.route || "—"}`, `DOSIS: ${line.dose || "—"}`, `FRECUENCIA: ${line.frequency || "—"}`, `DURACIÓN: ${line.duration || "—"}`, `SURTIR: ${line.quantityToDispense || "—"}`, line.instructions || ""].filter(Boolean).join("\n"))}</td></tr>`).join("") : '<tr><td colspan="3">Sin medicamentos capturados.</td></tr>';
+  return `<article class="prescription-paper"><header class="rx-head">${crest ? `<img class="rx-logo" src="${crest}" alt="Escudo universitario">` : '<div class="rx-logo"></div>'}<div class="rx-head-center"><h2>${esc(r.pharmacy?.name || "FARMACIA")}</h2><p>${esc(r.pharmacy?.address || "DIRECCIÓN PENDIENTE DEL SISTEMA PRINCIPAL")}</p><p>${r.pharmacy?.phone ? `TEL. ${esc(r.pharmacy.phone)}` : "TELÉFONO PENDIENTE"}</p></div><div class="rx-folio"><b>${esc(r.folio || formatPrescriptionFolio())}</b><span>${esc(r.type || "ORDINARIA")}</span></div></header>
+    <section class="rx-doctor"><strong>${esc(r.doctor?.name || "NOMBRE DEL MÉDICO")}</strong><span>CÉDULA: ${esc(r.doctor?.license || "PENDIENTE")}</span><span>${esc(r.doctor?.profession || "PROFESIÓN")}${r.doctor?.specialty ? ` · ${esc(r.doctor.specialty)}` : ""}</span><span>${esc(r.doctor?.university || "INSTITUCIÓN FORMADORA")}</span></section>
+    <section class="rx-patient"><span class="wide"><b>PACIENTE:</b> ${esc(r.patient?.name || "SELECCIONAR PACIENTE")}</span><span><b>NACIMIENTO:</b> ${esc(r.patient?.birthDate || "—")}</span><span><b>EDAD:</b> ${esc(r.patient?.age ?? "—")}</span><span><b>PESO:</b> ${esc(r.patient?.weightKg || "—")} kg</span><span class="wide"><b>EMISIÓN:</b> ${esc(formatDate(r.issuedAt, true))} · <b>VIGENCIA:</b> ${esc(r.validUntil || "—")}</span><span class="wide"><b>IMPRESIÓN DIAGNÓSTICA:</b> ${esc(r.diagnosis || "—")}</span></section>
+    <table class="rx-medications"><thead><tr><th>#</th><th>MEDICAMENTO / PRESENTACIÓN</th><th>INDICACIONES</th></tr></thead><tbody>${medicineRows}</tbody></table>${r.nonPharmacological ? `<div class="rx-notes"><b>INDICACIONES COMPLEMENTARIAS</b><br>${esc(r.nonPharmacological)}</div>` : ""}
+    <div class="rx-signature"><div class="rx-signature-box">${signature ? `<img src="${signature}" alt="Firma digitalizada">` : ""}<b>${esc(r.doctor?.name || "MÉDICO")}</b><br>FIRMA AUTÓGRAFA O ELECTRÓNICA VALIDABLE</div></div><footer class="rx-footer">${r.integrityCode ? `CÓDIGO DE INTEGRIDAD: ${esc(r.integrityCode)} · ` : ""}Documento asociado al expediente ${esc(r.patientId || "—")}. Para antibióticos, surtir únicamente durante la duración indicada y aplicar el control sanitario correspondiente.</footer></article>`;
+}
+
+function renderPrescriptionPreview(recipe = APP.selectedPrescription) {
+  const target = $("prescription-preview"); if (!target) return;
+  target.outerHTML = `<div id="prescription-preview">${prescriptionPaperHtml(recipe || prescriptionDraft())}</div>`;
+  $("btn-print-prescription").disabled = !(recipe?.id);
+}
+
+function canonicalJson(value) {
+  if (value === null || typeof value !== "object") return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  return `{${Object.keys(value).filter((key) => value[key] !== undefined).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(",")}}`;
+}
+
+async function integrityCodeFor(value) {
+  const hash = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(canonicalJson(value))));
+  return Array.from(hash.slice(0, 10), (byte) => byte.toString(16).padStart(2, "0")).join("").toUpperCase();
+}
+
+function validatePrescriptionLines(lines) {
+  if (!lines.length) throw new Error("Agrega al menos un medicamento.");
+  return lines.map((line, index) => {
+    const item = { ...line, genericName: text(line.genericName, ""), pharmaceuticalForm: text(line.pharmaceuticalForm, ""), concentration: text(line.concentration, ""), presentation: text(line.presentation, ""), route: text(line.route, ""), dose: text(line.dose, ""), frequency: text(line.frequency, ""), duration: text(line.duration, ""), quantityToDispense: Math.trunc(Number(line.quantityToDispense || 0)) };
+    if (!item.genericName || !item.pharmaceuticalForm || !item.concentration || !item.presentation || !item.route || !item.dose || !item.frequency || !item.duration || item.quantityToDispense < 1) throw new Error(`Completa todos los datos obligatorios del medicamento ${index + 1}.`);
+    delete item.lineId; return item;
+  });
+}
+
+async function allocatePrescriptionFolio() {
+  const result = await updateFolioTransaction((current) => ({ ...current, lastIssued: current.nextNumber, nextNumber: current.nextNumber + 1, updatedAt: isoNow(), updatedBy: APP.auth.uid }));
+  return { folio: formatPrescriptionFolio(result.before, result.before.nextNumber), number: result.before.nextNumber, control: result.after };
+}
+
+async function savePrescription(event) {
+  event.preventDefault();
+  if (!medicalConfigComplete()) throw new Error("Completa primero Configuración médica, incluida la dirección y el teléfono de la farmacia.");
+  if (!APP.selectedPatientId || !APP.selectedPatient) throw new Error("Selecciona el paciente antes de guardar la receta.");
+  const draft = prescriptionDraft(); const items = validatePrescriptionLines(draft.items);
+  if (!draft.validUntil || !draft.diagnosis || !draft.patient.weightKg) throw new Error("Completa vigencia, peso e impresión diagnóstica.");
+  const issuedAt = draft.issuedAt; const validUntilEnd = new Date(`${draft.validUntil}T23:59:59`);
+  if (validUntilEnd < new Date(issuedAt)) throw new Error("La vigencia no puede ser anterior a la fecha de emisión.");
+  const reservation = await allocatePrescriptionFolio(); const createdAt = isoNow(); const id = newId("RECETA").toUpperCase();
+  const recipe = { ...draft, id, folio: reservation.folio, folioNumber: reservation.number, items, createdAt, authorUid: APP.auth.uid, authorEmail: APP.auth.email, authenticatedAuthor: true, immutable: true, schemaVersion: 1 };
+  recipe.integrityCode = await integrityCodeFor({ ...recipe, integrityCode: undefined });
+  const index = { id, folio: recipe.folio, patientId: APP.selectedPatientId, patientName: APP.selectedPatient.name, type: recipe.type, issuedAt: recipe.issuedAt, validUntil: recipe.validUntil, itemCount: items.length, createdAt, doctorName: recipe.doctor.name, searchKey: normalize(`${recipe.folio} ${APP.selectedPatient.name}`), integrityCode: recipe.integrityCode, schemaVersion: 1 };
+  await commitEvent({ id: newId("evt_prescription"), createdAt, operations: [
+    { method: "PUT", path: `expediente_clinico/${APP.config.storeId}/recetas/${APP.selectedPatientId}/${id}`, body: recipe },
+    { method: "PUT", path: `expediente_clinico/${APP.config.storeId}/recetas_historial/${id}`, body: index },
+    { method: "PUT", path: `expediente_clinico/${APP.config.storeId}/respaldos/${dateKey(createdAt)}/${id}`, body: { kind: "PRESCRIPTION", patientId: APP.selectedPatientId, data: recipe } },
+    { method: "PATCH", path: `expediente_clinico/${APP.config.storeId}/pacientes/${APP.selectedPatientId}`, body: { updatedAt: createdAt } },
+    { method: "PATCH", path: `expediente_clinico/${APP.config.storeId}/pacientes_indice/${APP.selectedPatientId}`, body: { updatedAt: createdAt } },
+    { method: "PUT", path: `expediente_clinico/${APP.config.storeId}/auditoria/${newId("audit")}`, body: { action: "PRESCRIPTION_CREATED", patientId: APP.selectedPatientId, recordId: id, folio: recipe.folio, createdAt, uid: APP.auth.uid, email: APP.auth.email } }
+  ]});
+  APP.selectedPrescription = recipe; APP.prescriptionLines = []; $("prescription-confirm").checked = false;
+  await backupPatient(APP.selectedPatientId).catch(() => {}); await loadPrescriptionHistory(); fillMedicalSettingsForm(); renderPrescriptionLines(); renderPrescriptionPreview(recipe);
+  toast(`Receta ${recipe.folio} guardada correctamente.`, "ok");
+}
+
+function clearPrescriptionDraft(resetForm = true) {
+  APP.selectedPrescription = null; APP.prescriptionLines = []; APP.prescriptionSearchRows = [];
+  if (resetForm) $("prescription-form").reset();
+  $("prescription-product-results").hidden = true; $("prescription-product-results").innerHTML = "";
+  const now = new Date(); $("prescription-datetime").value = localDateTimeValue(now);
+  const valid = new Date(now); valid.setDate(valid.getDate() + 30); $("prescription-valid-until").value = dateKey(valid);
+  if (APP.selectedPatient) {
+    $("prescription-patient-label").value = `${APP.selectedPatient.name} · ${APP.selectedPatientId}`;
+    $("prescription-patient-birth").value = APP.selectedPatient.birthDate || ""; $("prescription-patient-age").value = ageFromBirth(APP.selectedPatient.birthDate);
+  }
+  renderPrescriptionLines(); renderPrescriptionPreview();
+}
+
+async function loadPrescriptionHistory() {
+  const [history, sends] = await Promise.all([
+    db(`expediente_clinico/${APP.config.storeId}/recetas_historial`, { query: { orderBy: jsonQueryValue("createdAt"), limitToLast: 50 } }).catch(() => ({})),
+    db(`expediente_clinico/${APP.config.storeId}/recetas_envios`).catch(() => ({}))
+  ]);
+  APP.prescriptionHistory = Object.entries(history || {}).map(([id, item]) => ({ id, ...(item || {}), send: sends?.[id] || null })).sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+  renderPrescriptionHistory(); return APP.prescriptionHistory;
+}
+
+function renderPrescriptionHistory() {
+  const term = normalize($("prescription-history-search")?.value || "");
+  const rows = APP.prescriptionHistory.filter((item) => !term || normalize(`${item.folio} ${item.patientName}`).includes(term));
+  $("prescription-history").innerHTML = rows.length ? rows.map((item) => `<article class="rx-history-item"><div><h4>${esc(item.folio)}</h4><p>${esc(item.patientName)} · ${esc(formatDate(item.issuedAt, true))} · ${esc(item.type)} · ${esc(item.itemCount)} medicamento(s)</p></div><div class="rx-history-actions"><button class="open" type="button" data-open-prescription="${esc(item.id)}" data-patient="${esc(item.patientId)}">Ver / imprimir</button>${item.send ? `<button class="sent" type="button" disabled>Enviada ${esc(formatDate(item.send.sentAt, true))}</button>` : `<button class="send" type="button" data-send-prescription="${esc(item.id)}" data-patient="${esc(item.patientId)}">Enviar a farmacia</button>`}</div></article>`).join("") : '<div class="empty">No hay recetas que coincidan.</div>';
+}
+
+async function openPrescription(id, patientId) {
+  const recipe = await db(`expediente_clinico/${APP.config.storeId}/recetas/${patientId}/${id}`);
+  if (!recipe) throw new Error("La receta no está disponible.");
+  APP.selectedPrescription = recipe; renderPrescriptionPreview(recipe); showView("prescriptions");
+}
+
+function b64(bytes) { let binary = ""; const arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes || []); for (const byte of arr) binary += String.fromCharCode(byte); return btoa(binary); }
+
+async function encryptPharmacyOrder(payload, store) {
+  const jwk = store?.clavePublicaPedidos; const keyId = text(store?.clavePedidosId, "");
+  if (!jwk?.n || !jwk?.e || !keyId) throw new Error("La farmacia todavía no publicó su clave segura de pedidos. Sincroniza Mi Farmacia desde el sistema principal.");
+  const publicKey = await crypto.subtle.importKey("jwk", jwk, { name: "RSA-OAEP", hash: "SHA-256" }, false, ["encrypt"]);
+  const aesKey = await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt"]); const raw = await crypto.subtle.exportKey("raw", aesKey); const iv = crypto.getRandomValues(new Uint8Array(12));
+  const data = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, aesKey, new TextEncoder().encode(JSON.stringify(payload))); const wrapped = await crypto.subtle.encrypt({ name: "RSA-OAEP" }, publicKey, raw);
+  return { version: 1, alg: "RSA-OAEP+A256GCM", keyId, key: b64(wrapped), iv: b64(iv), data: b64(data) };
+}
+
+async function sendPrescriptionToPharmacy(id, patientId) {
+  const existing = await db(`expediente_clinico/${APP.config.storeId}/recetas_envios/${id}`).catch(() => null);
+  if (existing) throw new Error(`La receta ya fue enviada a farmacia el ${formatDate(existing.sentAt, true)}.`);
+  const recipe = await db(`expediente_clinico/${APP.config.storeId}/recetas/${patientId}/${id}`); if (!recipe) throw new Error("La receta no está disponible.");
+  const linked = (recipe.items || []).filter((item) => item.productCode && item.inventoryId);
+  if (!linked.length) throw new Error("La receta no contiene medicamentos vinculados al inventario. Agrégalos desde el buscador para enviarlos al carrito.");
+  if (linked.length !== (recipe.items || []).length && !window.confirm("Algunos medicamentos fueron capturados manualmente y no pueden vincularse al inventario. ¿Enviar únicamente los productos vinculados?")) return;
+  const store = await db(`mi_farmacia/tiendas/${APP.config.storeId}`); const orderId = firebaseKey(`RX-${id}`).slice(0, 120); const createdAt = isoNow();
+  const items = linked.map((item) => ({ idProducto: item.inventoryId, codigo: item.productCode, generica: item.genericName, distintiva: item.brandName || "", nombre: [item.genericName, item.brandName].filter(Boolean).join(" "), presentacion: item.presentation, cantidad: Number(item.quantityToDispense), precioUnitario: Number(item.price || 0), importe: Number(item.price || 0) * Number(item.quantityToDispense) }));
+  const piezas = items.reduce((sum, item) => sum + item.cantidad, 0); const totalEstimado = items.reduce((sum, item) => sum + item.importe, 0);
+  const contenidoCifrado = await encryptPharmacyOrder({ cliente: { nombre: recipe.patient?.name || "PACIENTE", telefono: recipe.patient?.phone || "" }, observaciones: `RECETA ${recipe.folio} · ${recipe.type}`, entrega: { tipo: "RECOGER_SUCURSAL" }, items, piezas, totalEstimado });
+  const order = { version: 1, origen: "RECETARIO_CLINICO", id: orderId, tiendaId: APP.config.storeId, tiendaNombre: APP.config.pharmacyName, estado: "NUEVO", recetaFolio: recipe.folio, prescriptionId: id, creadoEn: createdAt, actualizadoEn: createdAt, contenidoCifrado };
+  await db(`mi_farmacia/pedidos/${APP.config.storeId}/${orderId}`, { method: "PUT", body: order });
+  await db(`mi_farmacia/pedidos_meta/${APP.config.storeId}`, { method: "PUT", body: { revision: Date.now(), actualizadoEn: createdAt } }).catch(() => null);
+  const send = { recipeId: id, folio: recipe.folio, orderId, sentAt: createdAt, sentBy: APP.auth.uid, schemaVersion: 1 };
+  await commitEvent({ id: newId("evt_rx_send"), createdAt, operations: [
+    { method: "PUT", path: `expediente_clinico/${APP.config.storeId}/recetas_envios/${id}`, body: send },
+    { method: "PUT", path: `expediente_clinico/${APP.config.storeId}/auditoria/${newId("audit")}`, body: { action: "PRESCRIPTION_SENT_TO_PHARMACY", patientId, recordId: id, orderId, createdAt, uid: APP.auth.uid, email: APP.auth.email } }
+  ]});
+  await loadPrescriptionHistory(); toast(`Receta ${recipe.folio} enviada. La farmacia podrá cargarla en el primer carrito disponible.`, "ok");
+}
+
+function printSelectedPrescription() {
+  if (!APP.selectedPrescription?.id) throw new Error("Abre o guarda una receta antes de imprimir.");
+  $("prescription-print").innerHTML = prescriptionPaperHtml(APP.selectedPrescription); $("prescription-print").setAttribute("aria-hidden", "false");
+  window.print(); setTimeout(() => $("prescription-print").setAttribute("aria-hidden", "true"), 300);
+}
+
+function exportPrescriptionHistory() {
+  if (!APP.prescriptionHistory.length) throw new Error("No hay recetas para exportar.");
+  const rows = [["FOLIO", "FECHA", "VIGENCIA", "TIPO", "PACIENTE", "MÉDICO", "MEDICAMENTOS", "ESTADO FARMACIA"], ...APP.prescriptionHistory.map((item) => [item.folio, item.issuedAt, item.validUntil, item.type, item.patientName, item.doctorName, item.itemCount, item.send ? `ENVIADA ${item.send.sentAt}` : "GUARDADA"])];
+  downloadBlob(xlsxBlob([{ name: "RECETAS", rows }]), `HISTORIAL_RECETAS_${dateKey()}.xlsx`); toast("Historial de recetas exportado a Excel.", "ok");
+}
+
+async function preparePrescriptionModule() {
+  if (!APP.medicalConfig) await loadMedicalSettings();
+  if (!APP.prescriptionHistory.length) await loadPrescriptionHistory();
+  if (!$("prescription-datetime").value) clearPrescriptionDraft(false);
+  fillMedicalSettingsForm(); renderPrescriptionPreview();
+}
+
 async function startApp() {
   await checkRole();
   sessionStorage.setItem("macroxelClinicalSession", JSON.stringify(APP.auth));
@@ -519,6 +927,7 @@ async function startApp() {
   $("app").hidden = false;
   await restoreBackupHandle();
   await flushPending();
+  await loadMedicalSettings().catch(() => null);
   prepareForms();
   await loadDashboard();
 }
@@ -537,18 +946,47 @@ function bindEvents() {
   $("patient-form").addEventListener("submit", (event) => createPatient(event).catch((error) => toast(error.message, "error")));
   $("btn-search-patient").addEventListener("click", () => searchPatients($("patient-search").value, $("patient-results")).catch((error) => toast(error.message, "error")));
   $("patient-search").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); $("btn-search-patient").click(); } });
-  $("btn-pick-patient").addEventListener("click", () => $("patient-picker-dialog").showModal());
+  $("btn-pick-patient").addEventListener("click", () => { APP.patientPickerTarget = "consultation"; $("patient-picker-dialog").showModal(); });
+  $("btn-pick-prescription-patient").addEventListener("click", () => { APP.patientPickerTarget = "prescriptions"; $("patient-picker-dialog").showModal(); });
   $("btn-picker-search").addEventListener("click", () => searchPatients($("picker-search").value, $("picker-results"), true).catch((error) => toast(error.message, "error")));
   $("picker-search").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); $("btn-picker-search").click(); } });
   document.addEventListener("click", (event) => {
     const patientButton = event.target.closest("[data-patient-id]");
     if (patientButton) {
       const picker = patientButton.dataset.picker === "1";
-      openPatient(patientButton.dataset.patientId).then(() => { if (picker) { $("patient-picker-dialog").close(); showView("consultation"); } }).catch((error) => toast(error.message, "error"));
+      openPatient(patientButton.dataset.patientId).then(() => {
+        if (picker) {
+          $("patient-picker-dialog").close();
+          if (APP.patientPickerTarget === "prescriptions") clearPrescriptionDraft();
+          showView(APP.patientPickerTarget || "consultation");
+        }
+      }).catch((error) => toast(error.message, "error"));
     }
     const action = event.target.closest("[data-patient-action]")?.dataset.patientAction;
     if (action === "consult") showView("consultation");
+    if (action === "prescription") { clearPrescriptionDraft(); showView("prescriptions"); }
     if (action === "export") exportPatient().catch((error) => toast(error.message, "error"));
+
+    const addProduct = event.target.closest("[data-add-rx-product]");
+    if (addProduct) {
+      const product = APP.prescriptionSearchRows.find((item) => item.id === addProduct.dataset.addRxProduct);
+      if (product) {
+        APP.prescriptionLines.push(blankPrescriptionLine(product));
+        $("prescription-product-search").value = "";
+        $("prescription-product-results").hidden = true;
+        renderPrescriptionLines();
+        $("prescription-product-search").focus();
+      }
+    }
+    const removeLine = event.target.closest("[data-remove-rx-line]");
+    if (removeLine) {
+      APP.prescriptionLines = APP.prescriptionLines.filter((item) => item.lineId !== removeLine.dataset.removeRxLine);
+      renderPrescriptionLines();
+    }
+    const openRecipe = event.target.closest("[data-open-prescription]");
+    if (openRecipe) openPrescription(openRecipe.dataset.openPrescription, openRecipe.dataset.patient).catch((error) => toast(error.message, "error"));
+    const sendRecipe = event.target.closest("[data-send-prescription]");
+    if (sendRecipe) sendPrescriptionToPharmacy(sendRecipe.dataset.sendPrescription, sendRecipe.dataset.patient).catch((error) => toast(error.message, "error"));
   });
   $("consultation-form").addEventListener("submit", (event) => saveConsultation(event).catch((error) => toast(error.message, "error")));
   $("consultation-form").addEventListener("reset", () => setTimeout(prepareForms, 0));
@@ -557,6 +995,31 @@ function bindEvents() {
   $("btn-search-inventory").addEventListener("click", () => searchInventory().catch((error) => toast(error.message, "error")));
   $("inventory-search").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); $("btn-search-inventory").click(); } });
   $("btn-export-inventory").addEventListener("click", () => { try { exportInventory(); } catch (error) { toast(error.message, "error"); } });
+  $("prescription-form").addEventListener("submit", (event) => savePrescription(event).catch((error) => toast(error.message, "error")));
+  $("prescription-form").addEventListener("reset", () => setTimeout(() => clearPrescriptionDraft(false), 0));
+  $("prescription-form").addEventListener("input", (event) => {
+    if (event.target.matches("[data-rx-field]")) updatePrescriptionLineFromElement(event.target);
+    else renderPrescriptionPreview();
+  });
+  $("prescription-form").addEventListener("change", (event) => {
+    if (event.target.matches("[data-rx-field]")) updatePrescriptionLineFromElement(event.target);
+    else renderPrescriptionPreview();
+  });
+  $("btn-new-prescription").addEventListener("click", () => clearPrescriptionDraft());
+  $("btn-print-prescription").addEventListener("click", () => { try { printSelectedPrescription(); } catch (error) { toast(error.message, "error"); } });
+  $("btn-add-manual-medicine").addEventListener("click", () => { APP.prescriptionLines.push(blankPrescriptionLine()); renderPrescriptionLines(); });
+  $("btn-search-prescription-product").addEventListener("click", () => searchPrescriptionProducts().catch((error) => toast(error.message, "error")));
+  $("prescription-product-search").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); $("btn-search-prescription-product").click(); } });
+  $("btn-search-prescription-history").addEventListener("click", renderPrescriptionHistory);
+  $("prescription-history-search").addEventListener("input", renderPrescriptionHistory);
+  $("btn-export-prescriptions").addEventListener("click", () => { try { exportPrescriptionHistory(); } catch (error) { toast(error.message, "error"); } });
+
+  $("clinical-settings-form").addEventListener("submit", (event) => saveMedicalSettings(event).catch((error) => toast(error.message, "error")));
+  $("btn-enable-folio-edit").addEventListener("click", () => enableFolioEditing(true));
+  $("settings-university-crest").addEventListener("change", (event) => optimizeImageFile(event.target.files?.[0]).then((data) => { APP.crestDraft = data; setImagePreview("settings-university-crest-preview", data); renderPrescriptionPreview(); }).catch((error) => toast(error.message, "error")));
+  $("settings-doctor-signature").addEventListener("change", (event) => optimizeImageFile(event.target.files?.[0], 700).then((data) => { APP.signatureDraft = data; setImagePreview("settings-doctor-signature-preview", data); renderPrescriptionPreview(); }).catch((error) => toast(error.message, "error")));
+  $("btn-clear-university-crest").addEventListener("click", () => { APP.crestDraft = ""; $("settings-university-crest").value = ""; setImagePreview("settings-university-crest-preview", ""); renderPrescriptionPreview(); });
+  $("btn-clear-doctor-signature").addEventListener("click", () => { APP.signatureDraft = ""; $("settings-doctor-signature").value = ""; setImagePreview("settings-doctor-signature-preview", ""); renderPrescriptionPreview(); });
   window.addEventListener("online", () => flushPending().catch(() => {}));
 }
 
