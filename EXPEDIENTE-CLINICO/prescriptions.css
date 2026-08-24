@@ -6,8 +6,9 @@
 .rx-head{display:grid;grid-template-columns:58px 1fr 58px;gap:10px;align-items:center;border-bottom:1.5px solid #075c94;padding-bottom:7px}
 .rx-logo{width:54px;height:48px;object-fit:contain}.rx-logo-right{justify-self:end}.rx-head-center{text-align:center;min-width:0}
 .rx-head-center h2{margin:0;color:#075c94;font-size:17px;line-height:1.05}.rx-head-center p{margin:2px 0;font-size:8.5px;line-height:1.15}
-.rx-doctor{position:relative;display:grid;gap:2px;padding:6px 112px 6px 0;border-bottom:1px solid #d8e1ea;font-size:9px;line-height:1.2}.rx-doctor strong{font-size:10.5px}.rx-folio{position:absolute;right:0;top:7px;color:#075c94;font-size:10px;text-align:right}
-.rx-patient{margin:6px 0;padding:6px 8px;background:#eef7fd;border-radius:7px;display:grid;grid-template-columns:2fr .55fr .65fr 1.25fr;gap:3px 9px;font-size:8.5px;line-height:1.2}.rx-patient .wide{grid-column:1/-1}
+.rx-doctor{position:relative;display:block;padding:6px 112px 6px 0;border-bottom:1px solid #d8e1ea;font-size:8.7px;line-height:1.2}.rx-doctor-line{display:block;white-space:normal}.rx-doctor strong{font-size:10.2px}.rx-folio{position:absolute;right:0;top:7px;color:#075c94;font-size:10px;text-align:right}
+.rx-patient{margin:6px 0;padding:6px 8px;background:#eef7fd;border-radius:7px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px 9px;font-size:8px;line-height:1.2}.rx-patient .wide{grid-column:1/-1}
+.blood-pressure-fields{display:grid;grid-template-columns:1fr auto 1fr;gap:5px;align-items:center}.blood-pressure-fields b{text-align:center}.blood-pressure-fields input{min-width:0}
 .rx-medications{width:100%;border-collapse:collapse;font-size:8.7px;line-height:1.25}.rx-medications th{background:#075c94;color:#fff;text-align:left;padding:4px 5px}.rx-medications td{border-bottom:1px solid #d8e1ea;padding:5px;vertical-align:top}.rx-medications th:first-child,.rx-medications td:first-child{width:20px;text-align:center}
 .rx-notes{margin-top:5px;padding:5px 7px;border:1px solid #d8e1ea;border-radius:6px;font-size:8.3px;line-height:1.25;white-space:pre-line}
 .rx-signature{display:flex;justify-content:flex-end;margin-top:18px}.rx-signature-box{width:190px;text-align:center;border-top:1px solid #334155;padding-top:3px;font-size:8px;line-height:1.2}
