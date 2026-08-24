@@ -8,10 +8,12 @@
   "tiendaId": "FARMACIA_FARMABIEN_GARDENIAS",
   "storeId": "FARMACIA_FARMABIEN_GARDENIAS",
   "pharmacyName": "FARMACIA FARMABIEN GARDENIAS",
+  "pharmacyAddress": "CARRETERA PICACHO AJUSCO MZ28 LT14",
+  "pharmacyPhone": "5639741774",
   "modules": [
     "sales-reports",
     "clinical-records"
   ],
   "inventoryMode": "top-20-and-search-on-demand",
-  "updatedAt": "2026-08-24T04:07:11.025Z"
+  "updatedAt": "2026-08-24T04:39:00.471Z"
 }
