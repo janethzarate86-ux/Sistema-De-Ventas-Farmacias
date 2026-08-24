@@ -691,6 +691,7 @@ function renderDoctorProfiles() {
   const selector = $("prescription-doctor"); const current = APP.selectedDoctorId || selectedId;
   selector.innerHTML = profiles.length ? profiles.map((profile) => `<option value="${esc(profile.id)}"${profile.id === current ? " selected" : ""}>${esc(profile.doctorName)} · CÉD. ${esc(profile.doctorLicense)}</option>`).join("") : '<option value="">Configura y selecciona un médico</option>';
   APP.selectedDoctorId = selector.value || "";
+  refreshPrescriptionCompactSections();
 }
 
 function fillMedicalSettingsForm() {
@@ -853,6 +854,7 @@ function fillPrescriptionPatientFromRecord(patientId, patient) {
   $("prescription-patient-age").value = ageNumber(ageFromBirth(patient.birthDate)) || "";
   $("prescription-patient-sex").value = ["MASCULINO", "FEMENINO"].includes(normalize(patient.sex)) ? normalize(patient.sex) : "";
   $("prescription-patient-allergies").value = text(patient.allergies, "") || "NEGADAS";
+  refreshPrescriptionCompactSections();
 }
 
 function syncPrescriptionPatientInput(element) {
@@ -861,6 +863,41 @@ function syncPrescriptionPatientInput(element) {
   }
   if (element.id === "prescription-patient-birth") $("prescription-patient-age").value = ageNumber(ageFromBirth(element.value)) || "";
   if (element.id === "prescription-patient-weight" || element.id === "prescription-patient-height") calculatePrescriptionBmi();
+}
+
+const PRESCRIPTION_PATIENT_REQUIRED_IDS = [
+  "prescription-patient-label", "prescription-patient-age", "prescription-patient-sex", "prescription-patient-weight",
+  "prescription-patient-height", "prescription-patient-bmi", "prescription-patient-temperature",
+  "prescription-patient-systolic", "prescription-patient-diastolic", "prescription-patient-allergies", "prescription-diagnosis"
+];
+
+function prescriptionFieldHasValue(id) {
+  return String($(id)?.value ?? "").trim() !== "";
+}
+
+function prescriptionPrescriberReady() {
+  const doctorId = $("prescription-doctor")?.value || APP.selectedDoctorId;
+  return doctorProfileComplete(selectedDoctor(APP.medicalConfig, doctorId))
+    && ["prescription-datetime", "prescription-valid-until", "prescription-type"].every(prescriptionFieldHasValue);
+}
+
+function prescriptionPatientReady() {
+  return PRESCRIPTION_PATIENT_REQUIRED_IDS.every(prescriptionFieldHasValue);
+}
+
+function refreshPrescriptionCompactSections({ changedId = "", forceOpen = false } = {}) {
+  const prescriberSection = $("prescription-prescriber-section"); const patientSection = $("prescription-patient-section");
+  if (!prescriberSection || !patientSection) return;
+  const doctorId = $("prescription-doctor")?.value || APP.selectedDoctorId; const doctor = selectedDoctor(APP.medicalConfig, doctorId);
+  $("prescription-prescriber-summary").textContent = doctorProfileComplete(doctor) ? `${doctor.doctorName} · CÉD. ${doctor.doctorLicense}` : "Selecciona al médico que prescribe";
+  const patientName = $("prescription-patient-label")?.value.trim() || ""; const age = $("prescription-patient-age")?.value.trim() || "";
+  $("prescription-patient-summary").textContent = patientName ? `${patientName}${age ? ` · ${age} año(s)` : ""}` : "Captura o selecciona al paciente";
+  if (forceOpen) { prescriberSection.open = true; patientSection.open = true; return; }
+  if (["prescription-doctor", "prescription-datetime", "prescription-valid-until", "prescription-type"].includes(changedId) && prescriptionPrescriberReady()) prescriberSection.open = false;
+  if (PRESCRIPTION_PATIENT_REQUIRED_IDS.includes(changedId) && prescriptionPatientReady()) {
+    patientSection.open = false;
+    setTimeout(() => $("prescription-product-search")?.focus(), 0);
+  }
 }
 
 function prescriptionDraft() {
@@ -975,7 +1012,7 @@ function clearPrescriptionDraft(resetForm = true) {
     APP.prescriptionPatientId = ""; APP.prescriptionPatientRecord = null;
   }
   calculatePrescriptionBmi();
-  renderPrescriptionLines(); renderPrescriptionPreview();
+  refreshPrescriptionCompactSections({ forceOpen:true }); renderPrescriptionLines(); renderPrescriptionPreview();
 }
 
 async function loadPrescriptionHistory() {
@@ -1001,9 +1038,9 @@ async function openPrescription(id, patientId) {
 
 function b64(bytes) { let binary = ""; const arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes || []); for (const byte of arr) binary += String.fromCharCode(byte); return btoa(binary); }
 
-async function encryptPharmacyOrder(payload, store) {
-  const jwk = store?.clavePublicaPedidos; const keyId = text(store?.clavePedidosId, "");
-  if (!jwk?.n || !jwk?.e || !keyId) throw new Error("La farmacia todavía no publicó su clave segura de pedidos. Sincroniza Mi Farmacia desde el sistema principal.");
+async function encryptPharmacyOrder(payload, channel) {
+  const jwk = channel?.publicKey || channel?.clavePublicaPedidos; const keyId = text(channel?.keyId || channel?.clavePedidosId, "");
+  if (!jwk?.n || !jwk?.e || !keyId) throw new Error("El canal seguro de recetas todavía no está publicado. En el sistema principal abre Configuración > Conexiones y presiona Sincronizar inventario clínico.");
   const publicKey = await crypto.subtle.importKey("jwk", jwk, { name: "RSA-OAEP", hash: "SHA-256" }, false, ["encrypt"]);
   const aesKey = await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt"]); const raw = await crypto.subtle.exportKey("raw", aesKey); const iv = crypto.getRandomValues(new Uint8Array(12));
   const data = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, aesKey, new TextEncoder().encode(JSON.stringify(payload))); const wrapped = await crypto.subtle.encrypt({ name: "RSA-OAEP" }, publicKey, raw);
@@ -1018,10 +1055,12 @@ async function sendPrescriptionToPharmacy(id, patientId) {
   if (!linked.length) throw new Error("La receta no contiene medicamentos vinculados al inventario. Agrégalos desde el buscador para enviarlos al carrito.");
   if (linked.length !== (recipe.items || []).length && !window.confirm("Algunos medicamentos fueron capturados manualmente y no pueden vincularse al inventario. ¿Enviar únicamente los productos vinculados?")) return;
   if (linked.some((item) => !Number.isInteger(Number(item.quantityToDispense)) || Number(item.quantityToDispense) < 1)) throw new Error("Para enviar a farmacia, captura las piezas a surtir de cada producto vinculado.");
-  const store = await db(`mi_farmacia/tiendas/${APP.config.storeId}`); const orderId = firebaseKey(`RX-${id}`).slice(0, 120); const createdAt = isoNow();
+  let channel = await db(`expediente_clinico/${APP.config.storeId}/canal_farmacia`).catch(() => null);
+  if (!channel?.publicKey?.n || !channel?.keyId) channel = await db(`mi_farmacia/tiendas/${APP.config.storeId}`).catch(() => null);
+  const orderId = firebaseKey(`RX-${id}`).slice(0, 120); const createdAt = isoNow();
   const items = linked.map((item) => ({ idProducto: item.inventoryId, codigo: item.productCode, generica: item.genericName, distintiva: item.brandName || "", nombre: [item.genericName, item.brandName].filter(Boolean).join(" "), presentacion: item.presentation, cantidad: Number(item.quantityToDispense), precioUnitario: Number(item.price || 0), importe: Number(item.price || 0) * Number(item.quantityToDispense) }));
   const piezas = items.reduce((sum, item) => sum + item.cantidad, 0); const totalEstimado = items.reduce((sum, item) => sum + item.importe, 0);
-  const contenidoCifrado = await encryptPharmacyOrder({ cliente: { nombre: recipe.patient?.name || "PACIENTE", telefono: recipe.patient?.phone || "" }, observaciones: `RECETA ${recipe.folio} · ${recipe.type}`, entrega: { tipo: "RECOGER_SUCURSAL" }, items, piezas, totalEstimado });
+  const contenidoCifrado = await encryptPharmacyOrder({ cliente: { nombre: recipe.patient?.name || "PACIENTE", telefono: recipe.patient?.phone || "" }, observaciones: `RECETA ${recipe.folio} · ${recipe.type}`, entrega: { tipo: "RECOGER_SUCURSAL" }, items, piezas, totalEstimado }, channel);
   const order = { version: 1, origen: "RECETARIO_CLINICO", id: orderId, tiendaId: APP.config.storeId, tiendaNombre: APP.config.pharmacyName, estado: "NUEVO", recetaFolio: recipe.folio, prescriptionId: id, creadoEn: createdAt, actualizadoEn: createdAt, contenidoCifrado };
   await db(`mi_farmacia/pedidos/${APP.config.storeId}/${orderId}`, { method: "PUT", body: order });
   await db(`mi_farmacia/pedidos_meta/${APP.config.storeId}`, { method: "PUT", body: { revision: Date.now(), actualizadoEn: createdAt } }).catch(() => null);
@@ -1137,12 +1176,13 @@ function bindEvents() {
   $("prescription-form").addEventListener("reset", () => setTimeout(() => clearPrescriptionDraft(false), 0));
   $("prescription-form").addEventListener("input", (event) => {
     if (event.target.matches("[data-rx-field]")) updatePrescriptionLineFromElement(event.target);
-    else { syncPrescriptionPatientInput(event.target); renderPrescriptionPreview(); }
+    else { syncPrescriptionPatientInput(event.target); refreshPrescriptionCompactSections(); renderPrescriptionPreview(); }
   });
   $("prescription-form").addEventListener("change", (event) => {
     if (event.target.matches("[data-rx-field]")) updatePrescriptionLineFromElement(event.target);
-    else { if (event.target.id === "prescription-doctor") APP.selectedDoctorId = event.target.value; renderPrescriptionPreview(); }
+    else { if (event.target.id === "prescription-doctor") APP.selectedDoctorId = event.target.value; refreshPrescriptionCompactSections({ changedId:event.target.id }); renderPrescriptionPreview(); }
   });
+  $("prescription-form").addEventListener("invalid", (event) => { const section = event.target.closest("details.rx-collapsible-section"); if (section) section.open = true; }, true);
   $("btn-new-prescription").addEventListener("click", () => clearPrescriptionDraft());
   $("btn-print-prescription").addEventListener("click", () => { try { printSelectedPrescription(); } catch (error) { toast(error.message, "error"); } });
   $("btn-add-manual-medicine").addEventListener("click", () => { APP.prescriptionLines.push(blankPrescriptionLine()); renderPrescriptionLines(); });
