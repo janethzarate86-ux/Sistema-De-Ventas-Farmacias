@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebasedatabase.app; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebasedatabase.app; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
   <title>Visor Expediente Clínico y Existencias</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="visibility.css">
@@ -73,11 +73,13 @@
           <form id="prescription-form" class="panel clinical-form prescription-editor">
             <div class="panel-head"><div><h3>Datos de la receta</h3><p id="prescription-next-folio">Próximo folio: pendiente de configuración</p></div><span id="prescription-config-badge" class="badge warn">Completar configuración</span></div>
             <fieldset><legend>Paciente y emisión</legend><div class="form-grid cols-3">
-              <label class="span-2">Paciente seleccionado<input id="prescription-patient-label" readonly required placeholder="Selecciona un paciente desde Expedientes"></label><button id="btn-pick-prescription-patient" class="btn ghost align-end" type="button">Seleccionar paciente</button>
+              <label class="span-2">Nombre completo del paciente<input id="prescription-patient-label" required maxlength="180" autocomplete="off" placeholder="Escribe el nombre o selecciona un expediente"></label><button id="btn-pick-prescription-patient" class="btn ghost align-end" type="button">Seleccionar expediente</button>
               <label>Médico que prescribe<select id="prescription-doctor" required><option value="">Configura y selecciona un médico</option></select></label><label>Fecha y hora de emisión<input id="prescription-datetime" type="datetime-local" required></label><label>Vigencia hasta<input id="prescription-valid-until" type="date" required></label>
-              <label>Tipo de receta<select id="prescription-type" required><option value="ORDINARIA">ORDINARIA</option><option value="ANTIBIOTICO">ANTIBIÓTICO</option></select></label><label>Fecha de nacimiento<input id="prescription-patient-birth" readonly></label><label>Edad<input id="prescription-patient-age" readonly></label>
-              <label>Peso actual (kg)<input id="prescription-patient-weight" type="number" min="0.2" max="500" step="0.1" required></label>
-              <label class="span-3">Impresión diagnóstica / motivo clínico<textarea id="prescription-diagnosis" required maxlength="1800"></textarea></label>
+              <label>Tipo de receta<select id="prescription-type" required><option value="ORDINARIA">ORDINARIA</option><option value="ANTIBIOTICO">ANTIBIÓTICO</option></select></label><label>Fecha de nacimiento (opcional)<input id="prescription-patient-birth" type="date"></label><label>Edad<input id="prescription-patient-age" type="number" min="0" max="130" step="1" required></label>
+              <label>Sexo<select id="prescription-patient-sex" required><option value="">SELECCIONAR</option><option value="MASCULINO">MASCULINO</option><option value="FEMENINO">FEMENINO</option></select></label><label>Peso actual (kg)<input id="prescription-patient-weight" type="number" min="0.2" max="500" step="0.1" required></label><label>Talla (cm)<input id="prescription-patient-height" type="number" min="30" max="250" step="0.1" required></label>
+              <label>IMC<input id="prescription-patient-bmi" type="number" step="0.1" readonly required></label><label>Temperatura (°C)<input id="prescription-patient-temperature" type="number" min="30" max="45" step="0.1" required></label><label>Presión arterial (mmHg)<span class="blood-pressure-fields"><input id="prescription-patient-systolic" type="number" min="40" max="300" step="1" required aria-label="Presión sistólica" placeholder="Sistólica"><b>/</b><input id="prescription-patient-diastolic" type="number" min="20" max="200" step="1" required aria-label="Presión diastólica" placeholder="Diastólica"></span></label>
+              <label class="span-3">Alergias<input id="prescription-patient-allergies" required maxlength="500" placeholder="Escribe las alergias o NEGADAS"></label>
+              <label class="span-3">Diagnóstico médico<textarea id="prescription-diagnosis" required maxlength="1800"></textarea></label>
             </div></fieldset>
             <fieldset><legend>Medicamentos</legend>
               <div class="prescription-product-search"><input id="prescription-product-search" type="search" placeholder="Escanea código o busca en el inventario" autocomplete="off"><button id="btn-search-prescription-product" class="btn dark" type="button">Buscar</button><button id="btn-add-manual-medicine" class="btn ghost" type="button">+ Medicamento manual</button></div>
