@@ -13,6 +13,7 @@ const APP = {
   medicalConfig: null,
   selectedDoctorId: "",
   editingDoctorId: "",
+  doctorEditorActive: false,
   folioControl: null,
   prescriptionLines: [],
   prescriptionSearchRows: [],
@@ -695,16 +696,18 @@ function fillDoctorEditor(doctorId = "") {
 
 function closeDoctorEditor() {
   fillDoctorEditor("");
+  APP.doctorEditorActive = false;
   const section = $("settings-doctor-editor-section");
-  if (section) section.open = false;
+  if (section) { section.open = false; section.classList.remove("editor-ready"); }
   $("settings-doctor-editor-summary").textContent = "Selecciona + Nuevo médico o Editar";
 }
 
 function openDoctorEditor(doctorId = "") {
   fillDoctorEditor(doctorId);
+  APP.doctorEditorActive = true;
   const profile = doctorId ? APP.medicalConfig?.profiles?.[doctorId] : null;
   const section = $("settings-doctor-editor-section");
-  if (section) section.open = true;
+  if (section) { section.classList.add("editor-ready"); section.open = true; }
   $("settings-doctor-editor-summary").textContent = profile ? `Editando: ${profile.doctorName}` : "Nuevo médico";
   setTimeout(() => $("settings-doctor-name")?.focus(), 0);
 }
@@ -1219,6 +1222,7 @@ function bindEvents() {
   $("btn-export-prescriptions").addEventListener("click", () => { try { exportPrescriptionHistory(); } catch (error) { toast(error.message, "error"); } });
 
   $("clinical-settings-form").addEventListener("submit", (event) => saveMedicalSettings(event).catch((error) => toast(error.message, "error")));
+  $("settings-doctor-editor-section").addEventListener("toggle", (event) => { if (event.currentTarget.open && !APP.doctorEditorActive) event.currentTarget.open = false; });
   $("clinical-contact-form").addEventListener("submit", (event) => saveClinicalContact(event).catch((error) => toast(error.message, "error")));
   $("folio-settings-form").addEventListener("submit", (event) => saveFolioSettings(event).catch((error) => toast(error.message, "error")));
   $("btn-new-doctor").addEventListener("click", () => { if (Object.keys(APP.medicalConfig?.profiles || {}).length >= 4) return toast("Ya existen cuatro médicos. Edita o elimina un perfil.", "error"); openDoctorEditor(""); });
