@@ -729,8 +729,13 @@ function enableFolioEditing(enabled = true) {
 
 async function persistMedicalConfig(config, action) {
   const saved = normalizedMedicalConfig({ ...config, updatedAt: isoNow(), updatedBy: APP.auth.uid, schemaVersion: 2 });
+  const primary = selectedDoctor(saved, saved.selectedDoctorId);
+  if (!doctorProfileComplete(primary)) throw new Error("Guarda al menos un médico completo antes de actualizar esta configuración.");
+  const compatiblePayload = { ...saved, doctorName: primary.doctorName, doctorLicense: primary.doctorLicense, doctorProfession: primary.doctorProfession,
+    doctorSpecialty: primary.doctorSpecialty, doctorUniversity: primary.doctorUniversity, universityCrest: primary.leftHeaderImage,
+    doctorSignature: primary.rightHeaderImage, schemaVersion: 1 };
   await commitEvent({ id: newId("evt_medical_config"), createdAt: saved.updatedAt, operations: [
-    { method: "PUT", path: `expediente_clinico/${APP.config.storeId}/configuracion_medicos/${APP.auth.uid}`, body: saved },
+    { method: "PUT", path: `expediente_clinico/${APP.config.storeId}/configuracion_medicos/${APP.auth.uid}`, body: compatiblePayload },
     { method: "PUT", path: `expediente_clinico/${APP.config.storeId}/auditoria/${newId("audit")}`, body: { action, createdAt: saved.updatedAt, uid: APP.auth.uid, email: APP.auth.email } }
   ]});
   APP.medicalConfig = saved; APP.selectedDoctorId = saved.selectedDoctorId; return saved;
@@ -776,6 +781,7 @@ async function chooseDoctor(doctorId) {
 
 async function removeDoctorProfile(doctorId) {
   const profile = APP.medicalConfig?.profiles?.[doctorId]; if (!profile) return;
+  if (Object.keys(APP.medicalConfig.profiles || {}).length <= 1) throw new Error("Debe conservarse al menos un médico. Primero registra el reemplazo y después elimina este perfil.");
   if (!window.confirm(`¿Eliminar el perfil de ${profile.doctorName}? Las recetas históricas no se modificarán.`)) return;
   const profiles = { ...APP.medicalConfig.profiles }; delete profiles[doctorId]; const selectedDoctorId = doctorId === APP.selectedDoctorId ? (Object.keys(profiles)[0] || "") : APP.selectedDoctorId;
   await persistMedicalConfig({ ...APP.medicalConfig, profiles, selectedDoctorId }, "PRESCRIPTION_DOCTOR_REMOVED"); fillMedicalSettingsForm(); fillDoctorEditor(selectedDoctorId); renderPrescriptionPreview(); toast("Perfil médico eliminado.", "ok");
