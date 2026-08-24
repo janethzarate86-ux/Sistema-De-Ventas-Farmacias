@@ -118,7 +118,7 @@
                 <fieldset><legend>Identificación profesional</legend><div class="form-grid cols-3">
                   <label class="span-2">Nombre completo<input id="settings-doctor-name" required maxlength="160"></label><label>Cédula profesional<input id="settings-doctor-license" required maxlength="40"></label>
                   <label>Sexo del médico<select id="settings-doctor-sex" required><option value="">SELECCIONAR</option><option value="MASCULINO">MASCULINO</option><option value="FEMENINO">FEMENINO</option></select></label><label>Profesión<input id="settings-doctor-profession" required maxlength="100" placeholder="MÉDICO CIRUJANO"></label><label>Especialidad<input id="settings-doctor-specialty" maxlength="120" placeholder="MEDICINA GENERAL"></label>
-                  <label class="span-3">Universidad / institución formadora<input id="settings-doctor-university" required maxlength="180"></label>
+                  <label class="span-3 doctor-university-row">Universidad / institución formadora<input id="settings-doctor-university" required maxlength="180"></label>
                 </div></fieldset>
                 <fieldset><legend>Imágenes superiores de la receta</legend><div class="settings-images"><label class="image-picker"><span>Imagen superior izquierda</span><input id="settings-university-crest" type="file" accept="image/png,image/jpeg,image/webp"><img id="settings-university-crest-preview" alt="Vista previa de la imagen izquierda" hidden><small>Escudo, logotipo o distintivo del médico.</small><button id="btn-clear-university-crest" class="link-btn" type="button">Quitar imagen</button></label><label class="image-picker"><span>Imagen superior derecha</span><input id="settings-doctor-signature" type="file" accept="image/png,image/jpeg,image/webp"><img id="settings-doctor-signature-preview" alt="Vista previa de la imagen derecha" hidden><small>Escudo, logotipo o segundo distintivo.</small><button id="btn-clear-doctor-signature" class="link-btn" type="button">Quitar imagen</button></label></div></fieldset>
                 <label class="confirm"><input id="settings-confirm" type="checkbox" required><span>Confirmo que los datos del médico son correctos y están autorizados para aparecer en las recetas.</span></label>
@@ -229,6 +229,7 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
   <section id="prescription-print" class="prescription-print" aria-hidden="true"></section>
+  <script src="prescription-quantity.js" defer></script>
   <script src="app.js" defer></script>
 </body>
 </html>
