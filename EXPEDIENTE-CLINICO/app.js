@@ -5,6 +5,8 @@ const APP = {
   auth: null,
   selectedPatientId: "",
   selectedPatient: null,
+  prescriptionPatientId: "",
+  prescriptionPatientRecord: null,
   patientPickerTarget: "consultation",
   recentPatients: [],
   inventoryRows: [],
@@ -308,9 +310,7 @@ async function openPatient(patientId) {
   APP.selectedPatient = patient;
   $("consult-patient-label").value = `${patient.name} · ${patientId}`;
   $("reference-patient-label").value = `${patient.name} · ${patientId}`;
-  $("prescription-patient-label").value = `${patient.name} · ${patientId}`;
-  $("prescription-patient-birth").value = patient.birthDate || "";
-  $("prescription-patient-age").value = ageFromBirth(patient.birthDate);
+  fillPrescriptionPatientFromRecord(patientId, patient);
   renderPatientDetail(patientId, patient, consultations || {}, references || {}, prescriptions || {});
   renderPrescriptionPreview();
   showView("records");
@@ -431,9 +431,7 @@ function prepareForms() {
   if (APP.selectedPatient) {
     $("consult-patient-label").value = `${APP.selectedPatient.name} · ${APP.selectedPatientId}`;
     $("reference-patient-label").value = `${APP.selectedPatient.name} · ${APP.selectedPatientId}`;
-    $("prescription-patient-label").value = `${APP.selectedPatient.name} · ${APP.selectedPatientId}`;
-    $("prescription-patient-birth").value = APP.selectedPatient.birthDate || "";
-    $("prescription-patient-age").value = ageFromBirth(APP.selectedPatient.birthDate);
+    fillPrescriptionPatientFromRecord(APP.selectedPatientId, APP.selectedPatient);
   }
 }
 
@@ -651,18 +649,27 @@ function setImagePreview(id, value) {
 async function optimizeImageFile(file, maxSide = 520) {
   if (!file || !/^image\/(?:png|jpeg|webp)$/i.test(file.type || "")) throw new Error("Selecciona una imagen PNG, JPG o WebP.");
   if (file.size > 5 * 1024 * 1024) throw new Error("La imagen supera 5 MB.");
-  const url = URL.createObjectURL(file);
-  try {
-    const image = new Image();
-    await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = () => reject(new Error("No se pudo leer la imagen.")); image.src = url; });
-    const scale = Math.min(1, maxSide / Math.max(image.naturalWidth || 1, image.naturalHeight || 1));
-    const canvas = document.createElement("canvas");
+  const source = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("No se pudo leer el archivo de imagen."));
+    reader.readAsDataURL(file);
+  });
+  const image = new Image();
+  await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = () => reject(new Error("La imagen está dañada o usa un formato no compatible.")); image.src = source; });
+  const initialScale = Math.min(1, maxSide / Math.max(image.naturalWidth || 1, image.naturalHeight || 1));
+  for (let attempt = 0; attempt < 7; attempt += 1) {
+    const scale = initialScale * (0.82 ** attempt); const canvas = document.createElement("canvas");
     canvas.width = Math.max(1, Math.round(image.naturalWidth * scale)); canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
-    const ctx = canvas.getContext("2d", { alpha: true }); ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-    const data = canvas.toDataURL("image/png");
-    if (!safeDataImage(data)) throw new Error("La imagen optimizada todavía es demasiado grande.");
-    return data;
-  } finally { URL.revokeObjectURL(url); }
+    const ctx = canvas.getContext("2d", { alpha: true });
+    if (!ctx) throw new Error("El navegador no pudo preparar la imagen.");
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const png = canvas.toDataURL("image/png");
+    if (safeDataImage(png)) return png;
+    const webp = canvas.toDataURL("image/webp", 0.86);
+    if (safeDataImage(webp)) return webp;
+  }
+  throw new Error("La imagen no pudo optimizarse al tamaño permitido.");
 }
 
 function fillDoctorEditor(doctorId = "") {
@@ -801,7 +808,7 @@ function renderPrescriptionLines() {
   const routeOptions = ["ORAL", "TÓPICA", "OFTÁLMICA", "ÓTICA", "INHALADA", "INTRAMUSCULAR", "INTRAVENOSA", "SUBCUTÁNEA", "RECTAL", "VAGINAL", "OTRA"];
   target.innerHTML = APP.prescriptionLines.map((line, index) => `<article class="rx-line" data-rx-line-id="${esc(line.lineId)}"><div class="rx-line-head"><div><b>Medicamento ${index + 1}</b><span>${line.productCode ? `Vinculado al inventario · ${esc(line.productCode)}` : "Captura manual · no se enviará al carrito hasta vincularlo"}</span></div><button class="link-btn" type="button" data-remove-rx-line="${esc(line.lineId)}">Eliminar</button></div><div class="rx-line-grid">
     <label class="span-2">Denominación genérica<input data-rx-field="genericName" value="${esc(line.genericName)}" required maxlength="220"></label><label class="span-2">Denominación distintiva<input data-rx-field="brandName" value="${esc(line.brandName)}" maxlength="220"></label>
-    <label>Forma farmacéutica (opcional)<input data-rx-field="pharmaceuticalForm" value="${esc(line.pharmaceuticalForm)}" maxlength="100" placeholder="TABLETA"></label><label>Concentración (opcional)<input data-rx-field="concentration" value="${esc(line.concentration)}" maxlength="100" placeholder="500 MG"></label><label class="span-2">Presentación / contenido<input data-rx-field="presentation" value="${esc(line.presentation)}" required maxlength="180" placeholder="CAJA CON 20 TABLETAS"></label>
+    <label>Forma farmacéutica (opcional)<input data-rx-field="pharmaceuticalForm" value="${esc(line.pharmaceuticalForm)}" maxlength="100" placeholder="TABLETA"></label><label>Concentración (opcional)<input data-rx-field="concentration" value="${esc(line.concentration)}" maxlength="100" placeholder="500 MG"></label><label class="span-2">Presentación / contenido (opcional)<input data-rx-field="presentation" value="${esc(line.presentation)}" maxlength="180" placeholder="CAJA CON 20 TABLETAS"></label>
     <label>Vía<select data-rx-field="route">${routeOptions.map((route) => `<option${route === line.route ? " selected" : ""}>${route}</option>`).join("")}</select></label><label>Dosis<input data-rx-field="dose" value="${esc(line.dose)}" required maxlength="120" placeholder="1 TABLETA"></label><label>Frecuencia<input data-rx-field="frequency" value="${esc(line.frequency)}" required maxlength="120" placeholder="CADA 8 HORAS"></label><label>Duración<input data-rx-field="duration" value="${esc(line.duration)}" required maxlength="120" placeholder="7 DÍAS"></label>
     <label>Piezas a surtir (opcional)<input data-rx-field="quantityToDispense" type="number" min="1" max="999" step="1" value="${esc(line.quantityToDispense)}"></label><label class="span-3">Indicaciones específicas<textarea data-rx-field="instructions" maxlength="600" placeholder="Tomar con alimentos, precauciones u horario">${esc(line.instructions)}</textarea></label>
   </div></article>`).join("");
@@ -828,14 +835,48 @@ async function searchPrescriptionProducts() {
 
 function ageNumber(value) { const match = String(value || "").match(/\d+/); return match ? Number(match[0]) : 0; }
 
+function numericInput(id) {
+  const raw = String($(id)?.value ?? "").trim();
+  return raw === "" ? null : Number(raw);
+}
+
+function calculatePrescriptionBmi() {
+  const kg = numericInput("prescription-patient-weight"); const cm = numericInput("prescription-patient-height");
+  $("prescription-patient-bmi").value = kg > 0 && cm > 0 ? (kg / ((cm / 100) ** 2)).toFixed(1) : "";
+}
+
+function fillPrescriptionPatientFromRecord(patientId, patient) {
+  if (!patient) return;
+  APP.prescriptionPatientId = patientId || ""; APP.prescriptionPatientRecord = patient;
+  $("prescription-patient-label").value = patient.name || "";
+  $("prescription-patient-birth").value = patient.birthDate || "";
+  $("prescription-patient-age").value = ageNumber(ageFromBirth(patient.birthDate)) || "";
+  $("prescription-patient-sex").value = ["MASCULINO", "FEMENINO"].includes(normalize(patient.sex)) ? normalize(patient.sex) : "";
+  $("prescription-patient-allergies").value = text(patient.allergies, "") || "NEGADAS";
+}
+
+function syncPrescriptionPatientInput(element) {
+  if (element.id === "prescription-patient-label" && APP.prescriptionPatientRecord && normalize(element.value) !== normalize(APP.prescriptionPatientRecord.name)) {
+    APP.prescriptionPatientId = ""; APP.prescriptionPatientRecord = null;
+  }
+  if (element.id === "prescription-patient-birth") $("prescription-patient-age").value = ageNumber(ageFromBirth(element.value)) || "";
+  if (element.id === "prescription-patient-weight" || element.id === "prescription-patient-height") calculatePrescriptionBmi();
+}
+
 function prescriptionDraft() {
   const issue = $("prescription-datetime")?.value ? new Date($("prescription-datetime").value).toISOString() : isoNow();
   const doctorId = $("prescription-doctor")?.value || APP.selectedDoctorId; const profile = selectedDoctor(APP.medicalConfig, doctorId);
   return {
     id: "", folio: formatPrescriptionFolio(), type: $("prescription-type")?.value || "ORDINARIA", issuedAt: issue,
     validUntil: $("prescription-valid-until")?.value || "", diagnosis: $("prescription-diagnosis")?.value.trim() || "",
-    nonPharmacological: $("prescription-nonpharma")?.value.trim() || "", patientId: APP.selectedPatientId,
-    patient: APP.selectedPatient ? { name: APP.selectedPatient.name, birthDate: APP.selectedPatient.birthDate, age: ageNumber(ageFromBirth(APP.selectedPatient.birthDate)), weightKg: $("prescription-patient-weight")?.value || "", phone: APP.selectedPatient.phone || "" } : {},
+    nonPharmacological: $("prescription-nonpharma")?.value.trim() || "", patientId: APP.prescriptionPatientId,
+    patient: {
+      name: $("prescription-patient-label")?.value.trim() || "", birthDate: $("prescription-patient-birth")?.value || "", age: numericInput("prescription-patient-age"),
+      sex: $("prescription-patient-sex")?.value || "", allergies: $("prescription-patient-allergies")?.value.trim() || "",
+      heightCm: numericInput("prescription-patient-height"), weightKg: numericInput("prescription-patient-weight"), bmi: numericInput("prescription-patient-bmi"),
+      temperatureC: numericInput("prescription-patient-temperature"), bloodPressure: { systolic: numericInput("prescription-patient-systolic"), diastolic: numericInput("prescription-patient-diastolic") },
+      phone: APP.prescriptionPatientRecord?.phone || ""
+    },
     doctor: profile ? { id: profile.id, name: profile.doctorName, license: profile.doctorLicense, profession: profile.doctorProfession, specialty: profile.doctorSpecialty, university: profile.doctorUniversity, leftImage: profile.leftHeaderImage, rightImage: profile.rightHeaderImage } : {},
     pharmacy: { name: APP.config?.pharmacyName || "Farmacia", address: APP.config?.pharmacyAddress || "", phone: APP.medicalConfig?.pharmacyPhone || APP.config?.pharmacyPhone || "" },
     items: APP.prescriptionLines.map((line) => ({ ...line }))
@@ -850,8 +891,8 @@ function prescriptionPaperHtml(recipe) {
     return `<tr><td>${index + 1}</td><td><b>${esc(line.genericName || "MEDICAMENTO")}</b>${descriptor ? ` · ${esc(descriptor)}` : ""} — ${esc(directions)}</td></tr>`;
   }).join("") : '<tr><td colspan="2">Sin medicamentos capturados.</td></tr>';
   return `<article class="prescription-paper"><header class="rx-head">${leftImage ? `<img class="rx-logo rx-logo-left" src="${leftImage}" alt="Imagen superior izquierda">` : '<div class="rx-logo rx-logo-left"></div>'}<div class="rx-head-center"><h2>${esc(r.pharmacy?.name || "FARMACIA")}</h2><p>${esc(r.pharmacy?.address || "DIRECCIÓN PENDIENTE DEL SISTEMA PRINCIPAL")}</p><p>${r.pharmacy?.phone ? `TEL. ${esc(r.pharmacy.phone)}` : "TELÉFONO PENDIENTE"}</p></div>${rightImage ? `<img class="rx-logo rx-logo-right" src="${rightImage}" alt="Imagen superior derecha">` : '<div class="rx-logo rx-logo-right"></div>'}</header>
-    <section class="rx-doctor"><span><strong>${esc(r.doctor?.name || "NOMBRE DEL MÉDICO")}</strong> · CÉDULA ${esc(r.doctor?.license || "PENDIENTE")}</span><span>${esc(r.doctor?.profession || "PROFESIÓN")}${r.doctor?.specialty ? ` · ${esc(r.doctor.specialty)}` : ""} · ${esc(r.doctor?.university || "INSTITUCIÓN FORMADORA")}</span><b class="rx-folio">${esc(r.folio || formatPrescriptionFolio())} · ${esc(r.type || "ORDINARIA")}</b></section>
-    <section class="rx-patient"><span><b>PACIENTE:</b> ${esc(r.patient?.name || "SELECCIONAR PACIENTE")}</span><span><b>EDAD:</b> ${esc(r.patient?.age ?? "—")}</span><span><b>PESO:</b> ${esc(r.patient?.weightKg || "—")} kg</span><span><b>FECHA:</b> ${esc(formatDate(r.issuedAt, true))}</span><span class="wide"><b>IMPRESIÓN DIAGNÓSTICA:</b> ${esc(r.diagnosis || "—")}</span></section>
+    <section class="rx-doctor"><span class="rx-doctor-line"><strong>${esc(r.doctor?.name || "NOMBRE DEL MÉDICO")}</strong> · CÉDULA ${esc(r.doctor?.license || "PENDIENTE")} · ${esc(r.doctor?.profession || "PROFESIÓN")}${r.doctor?.specialty ? ` · ${esc(r.doctor.specialty)}` : ""} · ${esc(r.doctor?.university || "INSTITUCIÓN FORMADORA")}</span><b class="rx-folio">${esc(r.folio || formatPrescriptionFolio())}</b></section>
+    <section class="rx-patient"><span class="wide"><b>PACIENTE:</b> ${esc(r.patient?.name || "NOMBRE DEL PACIENTE")}</span><span><b>EDAD:</b> ${esc(r.patient?.age ?? "—")}</span><span><b>SEXO:</b> ${esc(r.patient?.sex || "—")}</span><span><b>PESO:</b> ${esc(r.patient?.weightKg ?? "—")} kg</span><span><b>TALLA:</b> ${esc(r.patient?.heightCm ?? "—")} cm</span><span><b>IMC:</b> ${esc(r.patient?.bmi ?? "—")}</span><span><b>TEMP.:</b> ${esc(r.patient?.temperatureC ?? "—")} °C</span><span><b>TA:</b> ${esc(r.patient?.bloodPressure?.systolic ?? "—")}/${esc(r.patient?.bloodPressure?.diastolic ?? "—")} mmHg</span><span><b>FECHA:</b> ${esc(formatDate(r.issuedAt, true))}</span><span class="wide"><b>ALERGIAS:</b> ${esc(r.patient?.allergies || "—")}</span><span class="wide"><b>DIAGNÓSTICO:</b> ${esc(r.diagnosis || "—")}</span></section>
     <table class="rx-medications"><thead><tr><th>#</th><th>MEDICAMENTO E INDICACIONES</th></tr></thead><tbody>${medicineRows}</tbody></table>${r.nonPharmacological ? `<div class="rx-notes"><b>INDICACIONES COMPLEMENTARIAS:</b> ${esc(r.nonPharmacological)}</div>` : ""}
     <div class="rx-signature"><div class="rx-signature-box"><b>${esc(r.doctor?.name || "MÉDICO")}</b><br>FIRMA</div></div></article>`;
 }
@@ -882,7 +923,7 @@ function validatePrescriptionLines(lines) {
   return lines.map((line, index) => {
     const rawQuantity = String(line.quantityToDispense ?? "").trim(); const quantityToDispense = rawQuantity ? Math.trunc(Number(rawQuantity)) : null;
     const item = { ...line, genericName: text(line.genericName, ""), pharmaceuticalForm: text(line.pharmaceuticalForm, ""), concentration: text(line.concentration, ""), presentation: text(line.presentation, ""), route: text(line.route, ""), dose: text(line.dose, ""), frequency: text(line.frequency, ""), duration: text(line.duration, ""), quantityToDispense };
-    if (!item.genericName || !item.presentation || !item.route || !item.dose || !item.frequency || !item.duration) throw new Error(`Completa los datos clínicos obligatorios del medicamento ${index + 1}.`);
+    if (!item.genericName || !item.route || !item.dose || !item.frequency || !item.duration) throw new Error(`Completa los datos clínicos obligatorios del medicamento ${index + 1}.`);
     if (quantityToDispense !== null && (!Number.isInteger(quantityToDispense) || quantityToDispense < 1 || quantityToDispense > 999)) throw new Error(`La cantidad opcional del medicamento ${index + 1} no es válida.`);
     delete item.lineId; return item;
   });
@@ -896,25 +937,29 @@ async function allocatePrescriptionFolio() {
 async function savePrescription(event) {
   event.preventDefault();
   if (!medicalConfigComplete()) throw new Error("Completa primero Configuración médica, incluida la dirección y el teléfono de la farmacia.");
-  if (!APP.selectedPatientId || !APP.selectedPatient) throw new Error("Selecciona el paciente antes de guardar la receta.");
   const draft = prescriptionDraft(); const items = validatePrescriptionLines(draft.items);
-  if (!draft.validUntil || !draft.diagnosis || !draft.patient.weightKg) throw new Error("Completa vigencia, peso e impresión diagnóstica.");
+  const bp = draft.patient.bloodPressure || {};
+  if (!draft.patient.name || draft.patient.age === null || !draft.patient.sex || !draft.patient.allergies || !draft.patient.heightCm || !draft.patient.weightKg || !draft.patient.bmi || !draft.patient.temperatureC || !bp.systolic || !bp.diastolic || !draft.validUntil || !draft.diagnosis) throw new Error("Completa nombre, edad, sexo, alergias, talla, peso, IMC, temperatura, presión arterial, vigencia y diagnóstico.");
   const issuedAt = draft.issuedAt; const validUntilEnd = new Date(`${draft.validUntil}T23:59:59`);
   if (validUntilEnd < new Date(issuedAt)) throw new Error("La vigencia no puede ser anterior a la fecha de emisión.");
   const reservation = await allocatePrescriptionFolio(); const createdAt = isoNow(); const id = newId("RECETA").toUpperCase();
-  const recipe = { ...draft, id, folio: reservation.folio, folioNumber: reservation.number, items, createdAt, authorUid: APP.auth.uid, authorEmail: APP.auth.email, authenticatedAuthor: true, immutable: true, schemaVersion: 1 };
+  const linkedPatient = !!(APP.prescriptionPatientId && APP.prescriptionPatientRecord); const patientId = linkedPatient ? APP.prescriptionPatientId : newId("PAC_MANUAL").toUpperCase();
+  const recipe = { ...draft, patientId, patientSource: linkedPatient ? "EXPEDIENTE" : "CAPTURA_MANUAL", id, folio: reservation.folio, folioNumber: reservation.number, items, createdAt, authorUid: APP.auth.uid, authorEmail: APP.auth.email, authenticatedAuthor: true, immutable: true, schemaVersion: 1 };
   recipe.integrityCode = await integrityCodeFor({ ...recipe, integrityCode: undefined });
-  const index = { id, folio: recipe.folio, patientId: APP.selectedPatientId, patientName: APP.selectedPatient.name, type: recipe.type, issuedAt: recipe.issuedAt, validUntil: recipe.validUntil, itemCount: items.length, createdAt, doctorName: recipe.doctor.name, searchKey: normalize(`${recipe.folio} ${APP.selectedPatient.name}`), integrityCode: recipe.integrityCode, schemaVersion: 1 };
-  await commitEvent({ id: newId("evt_prescription"), createdAt, operations: [
-    { method: "PUT", path: `expediente_clinico/${APP.config.storeId}/recetas/${APP.selectedPatientId}/${id}`, body: recipe },
+  const index = { id, folio: recipe.folio, patientId, patientName: recipe.patient.name, type: recipe.type, issuedAt: recipe.issuedAt, validUntil: recipe.validUntil, itemCount: items.length, createdAt, doctorName: recipe.doctor.name, searchKey: normalize(`${recipe.folio} ${recipe.patient.name}`), integrityCode: recipe.integrityCode, schemaVersion: 1 };
+  const operations = [
+    { method: "PUT", path: `expediente_clinico/${APP.config.storeId}/recetas/${patientId}/${id}`, body: recipe },
     { method: "PUT", path: `expediente_clinico/${APP.config.storeId}/recetas_historial/${id}`, body: index },
-    { method: "PUT", path: `expediente_clinico/${APP.config.storeId}/respaldos/${dateKey(createdAt)}/${id}`, body: { kind: "PRESCRIPTION", patientId: APP.selectedPatientId, data: recipe } },
-    { method: "PATCH", path: `expediente_clinico/${APP.config.storeId}/pacientes/${APP.selectedPatientId}`, body: { updatedAt: createdAt } },
-    { method: "PATCH", path: `expediente_clinico/${APP.config.storeId}/pacientes_indice/${APP.selectedPatientId}`, body: { updatedAt: createdAt } },
-    { method: "PUT", path: `expediente_clinico/${APP.config.storeId}/auditoria/${newId("audit")}`, body: { action: "PRESCRIPTION_CREATED", patientId: APP.selectedPatientId, recordId: id, folio: recipe.folio, createdAt, uid: APP.auth.uid, email: APP.auth.email } }
-  ]});
+    { method: "PUT", path: `expediente_clinico/${APP.config.storeId}/respaldos/${dateKey(createdAt)}/${id}`, body: { kind: "PRESCRIPTION", patientId, data: recipe } },
+    { method: "PUT", path: `expediente_clinico/${APP.config.storeId}/auditoria/${newId("audit")}`, body: { action: "PRESCRIPTION_CREATED", patientId, patientSource: recipe.patientSource, recordId: id, folio: recipe.folio, createdAt, uid: APP.auth.uid, email: APP.auth.email } }
+  ];
+  if (linkedPatient) operations.splice(3, 0,
+    { method: "PATCH", path: `expediente_clinico/${APP.config.storeId}/pacientes/${patientId}`, body: { updatedAt: createdAt } },
+    { method: "PATCH", path: `expediente_clinico/${APP.config.storeId}/pacientes_indice/${patientId}`, body: { updatedAt: createdAt } }
+  );
+  await commitEvent({ id: newId("evt_prescription"), createdAt, operations });
   APP.selectedPrescription = recipe; APP.prescriptionLines = []; $("prescription-confirm").checked = false;
-  await backupPatient(APP.selectedPatientId).catch(() => {}); await loadPrescriptionHistory(); fillMedicalSettingsForm(); renderPrescriptionLines(); renderPrescriptionPreview(recipe);
+  if (linkedPatient) await backupPatient(patientId).catch(() => {}); await loadPrescriptionHistory(); fillMedicalSettingsForm(); renderPrescriptionLines(); renderPrescriptionPreview(recipe);
   toast(`Receta ${recipe.folio} guardada correctamente.`, "ok");
 }
 
@@ -925,9 +970,11 @@ function clearPrescriptionDraft(resetForm = true) {
   const now = new Date(); $("prescription-datetime").value = localDateTimeValue(now);
   const valid = new Date(now); valid.setDate(valid.getDate() + 30); $("prescription-valid-until").value = dateKey(valid);
   if (APP.selectedPatient) {
-    $("prescription-patient-label").value = `${APP.selectedPatient.name} · ${APP.selectedPatientId}`;
-    $("prescription-patient-birth").value = APP.selectedPatient.birthDate || ""; $("prescription-patient-age").value = ageFromBirth(APP.selectedPatient.birthDate);
+    fillPrescriptionPatientFromRecord(APP.selectedPatientId, APP.selectedPatient);
+  } else {
+    APP.prescriptionPatientId = ""; APP.prescriptionPatientRecord = null;
   }
+  calculatePrescriptionBmi();
   renderPrescriptionLines(); renderPrescriptionPreview();
 }
 
@@ -1090,7 +1137,7 @@ function bindEvents() {
   $("prescription-form").addEventListener("reset", () => setTimeout(() => clearPrescriptionDraft(false), 0));
   $("prescription-form").addEventListener("input", (event) => {
     if (event.target.matches("[data-rx-field]")) updatePrescriptionLineFromElement(event.target);
-    else renderPrescriptionPreview();
+    else { syncPrescriptionPatientInput(event.target); renderPrescriptionPreview(); }
   });
   $("prescription-form").addEventListener("change", (event) => {
     if (event.target.matches("[data-rx-field]")) updatePrescriptionLineFromElement(event.target);
@@ -1111,8 +1158,8 @@ function bindEvents() {
   $("btn-new-doctor").addEventListener("click", () => { if (Object.keys(APP.medicalConfig?.profiles || {}).length >= 4) return toast("Ya existen cuatro médicos. Edita o elimina un perfil.", "error"); fillDoctorEditor(""); });
   $("btn-cancel-doctor-edit").addEventListener("click", () => fillDoctorEditor(APP.selectedDoctorId));
   $("btn-enable-folio-edit").addEventListener("click", () => enableFolioEditing(true));
-  $("settings-university-crest").addEventListener("change", (event) => optimizeImageFile(event.target.files?.[0]).then((data) => { APP.leftImageDraft = data; setImagePreview("settings-university-crest-preview", data); }).catch((error) => toast(error.message, "error")));
-  $("settings-doctor-signature").addEventListener("change", (event) => optimizeImageFile(event.target.files?.[0]).then((data) => { APP.rightImageDraft = data; setImagePreview("settings-doctor-signature-preview", data); }).catch((error) => toast(error.message, "error")));
+  $("settings-university-crest").addEventListener("change", (event) => optimizeImageFile(event.target.files?.[0]).then((data) => { APP.leftImageDraft = data; setImagePreview("settings-university-crest-preview", data); toast("Imagen izquierda cargada. Guarda el médico para conservarla.", "ok"); }).catch((error) => toast(error.message, "error")));
+  $("settings-doctor-signature").addEventListener("change", (event) => optimizeImageFile(event.target.files?.[0]).then((data) => { APP.rightImageDraft = data; setImagePreview("settings-doctor-signature-preview", data); toast("Imagen derecha cargada. Guarda el médico para conservarla.", "ok"); }).catch((error) => toast(error.message, "error")));
   $("btn-clear-university-crest").addEventListener("click", () => { APP.leftImageDraft = ""; $("settings-university-crest").value = ""; setImagePreview("settings-university-crest-preview", ""); });
   $("btn-clear-doctor-signature").addEventListener("click", () => { APP.rightImageDraft = ""; $("settings-doctor-signature").value = ""; setImagePreview("settings-doctor-signature-preview", ""); });
   window.addEventListener("online", () => flushPending().catch(() => {}));
