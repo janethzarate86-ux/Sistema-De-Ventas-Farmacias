@@ -4,7 +4,7 @@
   "purpose": "central-viewers",
   "firebaseUrl": "https://ventasfarmacia-y-paginagithub-default-rtdb.firebaseio.com",
   "firebaseDatabaseUrl": "https://ventasfarmacia-y-paginagithub-default-rtdb.firebaseio.com",
-  "firebaseApiKey": "",
+  "firebaseApiKey": "AIzaSyAxmCfnLy-5aiLTfLZbTqDGOEvm68q9Heo",
   "tiendaId": "FARMACIA_FARMABIEN_GARDENIAS",
   "storeId": "FARMACIA_FARMABIEN_GARDENIAS",
   "pharmacyName": "FARMACIA FARMABIEN GARDENIAS",
@@ -13,5 +13,5 @@
     "clinical-records"
   ],
   "inventoryMode": "top-20-and-search-on-demand",
-  "updatedAt": "2026-08-24T02:51:01.052Z"
+  "updatedAt": "2026-08-24T04:07:11.025Z"
 }
