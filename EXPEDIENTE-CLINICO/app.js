@@ -560,10 +560,12 @@ function defaultMedicalConfig() {
 
 function normalizedDoctorProfile(value, id = "") {
   const raw = value && typeof value === "object" ? value : {};
+  const doctorSex = ["MASCULINO", "FEMENINO"].includes(normalize(raw.doctorSex)) ? normalize(raw.doctorSex) : "";
   return {
     id: firebaseKey(raw.id || id || newId("MEDICO")).slice(0, 80), doctorName: text(raw.doctorName, ""),
     doctorLicense: text(raw.doctorLicense, ""), doctorProfession: text(raw.doctorProfession, "MÉDICO CIRUJANO"),
     doctorSpecialty: text(raw.doctorSpecialty, "MEDICINA GENERAL"), doctorUniversity: text(raw.doctorUniversity, ""),
+    doctorSex,
     leftHeaderImage: safeDataImage(raw.leftHeaderImage || raw.universityCrest), rightHeaderImage: safeDataImage(raw.rightHeaderImage || raw.doctorSignature),
     updatedAt: raw.updatedAt || "", updatedBy: raw.updatedBy || "", schemaVersion: 1
   };
@@ -587,6 +589,11 @@ function selectedDoctor(config = APP.medicalConfig, doctorId = APP.selectedDocto
 
 function doctorProfileComplete(profile) {
   return !!(profile?.doctorName && profile?.doctorLicense && profile?.doctorProfession && profile?.doctorUniversity);
+}
+
+function titledDoctorName(doctor = {}) {
+  const cleanName = text(doctor.name || doctor.doctorName, "NOMBRE DEL MÉDICO").replace(/^(?:DR|DRA)\.?\s+/i, "");
+  return `${normalize(doctor.sex || doctor.doctorSex) === "FEMENINO" ? "Dra." : "Dr."} ${cleanName}`;
 }
 
 function defaultFolioControl() {
@@ -677,12 +684,29 @@ function fillDoctorEditor(doctorId = "") {
   APP.editingDoctorId = profile?.id || ""; $("settings-doctor-id").value = APP.editingDoctorId;
   $("settings-doctor-name").value = profile?.doctorName || "";
   $("settings-doctor-license").value = profile?.doctorLicense || "";
-  $("settings-doctor-profession").value = profile?.doctorProfession || "MÉDICO CIRUJANO";
-  $("settings-doctor-specialty").value = profile?.doctorSpecialty || "MEDICINA GENERAL";
+  $("settings-doctor-sex").value = profile?.doctorSex || "";
+  $("settings-doctor-profession").value = profile?.doctorProfession || "";
+  $("settings-doctor-specialty").value = profile?.doctorSpecialty || "";
   $("settings-doctor-university").value = profile?.doctorUniversity || "";
   APP.leftImageDraft = safeDataImage(profile?.leftHeaderImage); APP.rightImageDraft = safeDataImage(profile?.rightHeaderImage);
   setImagePreview("settings-university-crest-preview", APP.leftImageDraft); setImagePreview("settings-doctor-signature-preview", APP.rightImageDraft);
   $("settings-university-crest").value = ""; $("settings-doctor-signature").value = ""; $("settings-confirm").checked = false;
+}
+
+function closeDoctorEditor() {
+  fillDoctorEditor("");
+  const section = $("settings-doctor-editor-section");
+  if (section) section.open = false;
+  $("settings-doctor-editor-summary").textContent = "Selecciona + Nuevo médico o Editar";
+}
+
+function openDoctorEditor(doctorId = "") {
+  fillDoctorEditor(doctorId);
+  const profile = doctorId ? APP.medicalConfig?.profiles?.[doctorId] : null;
+  const section = $("settings-doctor-editor-section");
+  if (section) section.open = true;
+  $("settings-doctor-editor-summary").textContent = profile ? `Editando: ${profile.doctorName}` : "Nuevo médico";
+  setTimeout(() => $("settings-doctor-name")?.focus(), 0);
 }
 
 function renderDoctorProfiles() {
@@ -722,7 +746,7 @@ async function loadMedicalSettings() {
   APP.medicalConfig = normalizedMedicalConfig(config || defaultMedicalConfig()); APP.selectedDoctorId = APP.medicalConfig.selectedDoctorId;
   APP.folioControl = normalizedFolioControl(folio);
   fillMedicalSettingsForm();
-  fillDoctorEditor(APP.selectedDoctorId);
+  closeDoctorEditor();
   renderPrescriptionPreview();
   return APP.medicalConfig;
 }
@@ -739,7 +763,7 @@ async function persistMedicalConfig(config, action) {
   const saved = normalizedMedicalConfig({ ...config, updatedAt: isoNow(), updatedBy: APP.auth.uid, schemaVersion: 2 });
   const primary = selectedDoctor(saved, saved.selectedDoctorId);
   if (!doctorProfileComplete(primary)) throw new Error("Guarda al menos un médico completo antes de actualizar esta configuración.");
-  const compatiblePayload = { ...saved, doctorName: primary.doctorName, doctorLicense: primary.doctorLicense, doctorProfession: primary.doctorProfession,
+  const compatiblePayload = { ...saved, doctorName: primary.doctorName, doctorLicense: primary.doctorLicense, doctorSex: primary.doctorSex, doctorProfession: primary.doctorProfession,
     doctorSpecialty: primary.doctorSpecialty, doctorUniversity: primary.doctorUniversity, universityCrest: primary.leftHeaderImage,
     doctorSignature: primary.rightHeaderImage, schemaVersion: 1 };
   await commitEvent({ id: newId("evt_medical_config"), createdAt: saved.updatedAt, operations: [
@@ -756,13 +780,14 @@ async function saveMedicalSettings(event) {
   const profile = normalizedDoctorProfile({
     id: doctorId,
     doctorName: $("settings-doctor-name").value.trim(), doctorLicense: $("settings-doctor-license").value.trim(),
+    doctorSex: $("settings-doctor-sex").value,
     doctorProfession: $("settings-doctor-profession").value.trim(), doctorSpecialty: $("settings-doctor-specialty").value.trim(),
     doctorUniversity: $("settings-doctor-university").value.trim(), leftHeaderImage: safeDataImage(APP.leftImageDraft), rightHeaderImage: safeDataImage(APP.rightImageDraft),
     updatedAt: isoNow(), updatedBy: APP.auth.uid, schemaVersion: 1
   }, doctorId);
-  if (!doctorProfileComplete(profile)) throw new Error("Completa nombre, cédula, profesión y universidad del médico.");
+  if (!doctorProfileComplete(profile) || !profile.doctorSex) throw new Error("Completa nombre, sexo, cédula, profesión y universidad del médico.");
   profiles[doctorId] = profile; await persistMedicalConfig({ ...APP.medicalConfig, profiles, selectedDoctorId: APP.selectedDoctorId || doctorId }, "PRESCRIPTION_DOCTOR_SAVED");
-  APP.selectedDoctorId = APP.medicalConfig.selectedDoctorId; fillMedicalSettingsForm(); fillDoctorEditor(doctorId); renderPrescriptionPreview();
+  APP.selectedDoctorId = APP.medicalConfig.selectedDoctorId; fillMedicalSettingsForm(); closeDoctorEditor(); renderPrescriptionPreview();
   toast(`Médico ${profile.doctorName} guardado correctamente.`, "ok");
 }
 
@@ -792,7 +817,7 @@ async function removeDoctorProfile(doctorId) {
   if (Object.keys(APP.medicalConfig.profiles || {}).length <= 1) throw new Error("Debe conservarse al menos un médico. Primero registra el reemplazo y después elimina este perfil.");
   if (!window.confirm(`¿Eliminar el perfil de ${profile.doctorName}? Las recetas históricas no se modificarán.`)) return;
   const profiles = { ...APP.medicalConfig.profiles }; delete profiles[doctorId]; const selectedDoctorId = doctorId === APP.selectedDoctorId ? (Object.keys(profiles)[0] || "") : APP.selectedDoctorId;
-  await persistMedicalConfig({ ...APP.medicalConfig, profiles, selectedDoctorId }, "PRESCRIPTION_DOCTOR_REMOVED"); fillMedicalSettingsForm(); fillDoctorEditor(selectedDoctorId); renderPrescriptionPreview(); toast("Perfil médico eliminado.", "ok");
+  await persistMedicalConfig({ ...APP.medicalConfig, profiles, selectedDoctorId }, "PRESCRIPTION_DOCTOR_REMOVED"); fillMedicalSettingsForm(); closeDoctorEditor(); renderPrescriptionPreview(); toast("Perfil médico eliminado.", "ok");
 }
 
 function blankPrescriptionLine(product = null) {
@@ -914,7 +939,7 @@ function prescriptionDraft() {
       temperatureC: numericInput("prescription-patient-temperature"), bloodPressure: { systolic: numericInput("prescription-patient-systolic"), diastolic: numericInput("prescription-patient-diastolic") },
       phone: APP.prescriptionPatientRecord?.phone || ""
     },
-    doctor: profile ? { id: profile.id, name: profile.doctorName, license: profile.doctorLicense, profession: profile.doctorProfession, specialty: profile.doctorSpecialty, university: profile.doctorUniversity, leftImage: profile.leftHeaderImage, rightImage: profile.rightHeaderImage } : {},
+    doctor: profile ? { id: profile.id, name: profile.doctorName, sex: profile.doctorSex, license: profile.doctorLicense, profession: profile.doctorProfession, specialty: profile.doctorSpecialty, university: profile.doctorUniversity, leftImage: profile.leftHeaderImage, rightImage: profile.rightHeaderImage } : {},
     pharmacy: { name: APP.config?.pharmacyName || "Farmacia", address: APP.config?.pharmacyAddress || "", phone: APP.medicalConfig?.pharmacyPhone || APP.config?.pharmacyPhone || "" },
     items: APP.prescriptionLines.map((line) => ({ ...line }))
   };
@@ -922,16 +947,17 @@ function prescriptionDraft() {
 
 function prescriptionPaperHtml(recipe) {
   const r = recipe || prescriptionDraft(); const leftImage = safeDataImage(r.doctor?.leftImage || r.doctor?.crest); const rightImage = safeDataImage(r.doctor?.rightImage || r.doctor?.signature);
+  const doctorName = titledDoctorName(r.doctor);
   const medicineRows = (r.items || []).length ? r.items.map((line, index) => {
     const descriptor = [line.brandName, line.pharmaceuticalForm, line.concentration, line.presentation].filter(Boolean).join(" · ");
     const directions = [`DOSIS ${line.dose || "—"}`, `VÍA ${line.route || "—"}`, `FRECUENCIA ${line.frequency || "—"}`, `DURACIÓN ${line.duration || "—"}`, Number(line.quantityToDispense) > 0 ? `SURTIR ${line.quantityToDispense}` : "", line.instructions || ""].filter(Boolean).join(" · ");
     return `<tr><td>${index + 1}</td><td><b>${esc(line.genericName || "MEDICAMENTO")}</b>${descriptor ? ` · ${esc(descriptor)}` : ""} — ${esc(directions)}</td></tr>`;
   }).join("") : '<tr><td colspan="2">Sin medicamentos capturados.</td></tr>';
-  return `<article class="prescription-paper"><header class="rx-head">${leftImage ? `<img class="rx-logo rx-logo-left" src="${leftImage}" alt="Imagen superior izquierda">` : '<div class="rx-logo rx-logo-left"></div>'}<div class="rx-head-center"><h2>${esc(r.pharmacy?.name || "FARMACIA")}</h2><p>${esc(r.pharmacy?.address || "DIRECCIÓN PENDIENTE DEL SISTEMA PRINCIPAL")}</p><p>${r.pharmacy?.phone ? `TEL. ${esc(r.pharmacy.phone)}` : "TELÉFONO PENDIENTE"}</p></div>${rightImage ? `<img class="rx-logo rx-logo-right" src="${rightImage}" alt="Imagen superior derecha">` : '<div class="rx-logo rx-logo-right"></div>'}</header>
-    <section class="rx-doctor"><span class="rx-doctor-line"><strong>${esc(r.doctor?.name || "NOMBRE DEL MÉDICO")}</strong><span class="rx-doctor-part">CÉDULA ${esc(r.doctor?.license || "PENDIENTE")}</span><span class="rx-doctor-part">${esc(r.doctor?.profession || "PROFESIÓN")}</span>${r.doctor?.specialty ? `<span class="rx-doctor-part">${esc(r.doctor.specialty)}</span>` : ""}<span class="rx-doctor-part">${esc(r.doctor?.university || "INSTITUCIÓN FORMADORA")}</span></span><b class="rx-folio">${esc(r.folio || formatPrescriptionFolio())}</b></section>
-    <section class="rx-patient"><span class="wide"><b>PACIENTE:</b> ${esc(r.patient?.name || "NOMBRE DEL PACIENTE")}</span><span><b>EDAD:</b> ${esc(r.patient?.age ?? "—")}</span><span><b>SEXO:</b> ${esc(r.patient?.sex || "—")}</span><span><b>PESO:</b> ${esc(r.patient?.weightKg ?? "—")} kg</span><span><b>TALLA:</b> ${esc(r.patient?.heightCm ?? "—")} cm</span><span><b>IMC:</b> ${esc(r.patient?.bmi ?? "—")}</span><span><b>TEMP.:</b> ${esc(r.patient?.temperatureC ?? "—")} °C</span><span><b>TA:</b> ${esc(r.patient?.bloodPressure?.systolic ?? "—")}/${esc(r.patient?.bloodPressure?.diastolic ?? "—")} mmHg</span><span><b>FECHA:</b> ${esc(formatDate(r.issuedAt, true))}</span><span class="wide"><b>ALERGIAS:</b> ${esc(r.patient?.allergies || "—")}</span><span class="wide"><b>DIAGNÓSTICO:</b> ${esc(r.diagnosis || "—")}</span></section>
+  return `<article class="prescription-paper"><header class="rx-head">${leftImage ? `<img class="rx-logo rx-logo-left" src="${leftImage}" alt="Imagen superior izquierda">` : '<div class="rx-logo rx-logo-left"></div>'}<div class="rx-head-center"><h2>${esc(doctorName)}</h2><p class="rx-doctor-line"><span>CÉDULA ${esc(r.doctor?.license || "PENDIENTE")}</span><span class="rx-doctor-part">${esc(r.doctor?.profession || "PROFESIÓN")}</span>${r.doctor?.specialty ? `<span class="rx-doctor-part">${esc(r.doctor.specialty)}</span>` : ""}<span class="rx-doctor-part">${esc(r.doctor?.university || "INSTITUCIÓN FORMADORA")}</span></p></div>${rightImage ? `<img class="rx-logo rx-logo-right" src="${rightImage}" alt="Imagen superior derecha">` : '<div class="rx-logo rx-logo-right"></div>'}</header>
+    <section class="rx-folio-row"><b class="rx-folio">${esc(r.folio || formatPrescriptionFolio())}</b></section>
+    <section class="rx-patient"><span class="rx-patient-name"><b>PACIENTE:</b> ${esc(r.patient?.name || "NOMBRE DEL PACIENTE")}</span><span class="rx-patient-date"><b>FECHA:</b> ${esc(formatDate(r.issuedAt, true))}</span><span><b>EDAD:</b> ${esc(r.patient?.age ?? "—")}</span><span><b>SEXO:</b> ${esc(r.patient?.sex || "—")}</span><span><b>PESO:</b> ${esc(r.patient?.weightKg ?? "—")} kg</span><span><b>TALLA:</b> ${esc(r.patient?.heightCm ?? "—")} cm</span><span><b>IMC:</b> ${esc(r.patient?.bmi ?? "—")}</span><span><b>TEMP.:</b> ${esc(r.patient?.temperatureC ?? "—")} °C</span><span><b>TA:</b> ${esc(r.patient?.bloodPressure?.systolic ?? "—")}/${esc(r.patient?.bloodPressure?.diastolic ?? "—")} mmHg</span><span></span><span class="wide"><b>ALERGIAS:</b> ${esc(r.patient?.allergies || "—")}</span><span class="wide"><b>DIAGNÓSTICO:</b> ${esc(r.diagnosis || "—")}</span></section>
     <table class="rx-medications"><thead><tr><th>#</th><th>MEDICAMENTO E INDICACIONES</th></tr></thead><tbody>${medicineRows}</tbody></table>
-    <footer class="rx-footer"><div class="rx-notes"><b>INDICACIONES COMPLEMENTARIAS:</b>${r.nonPharmacological ? ` ${esc(r.nonPharmacological)}` : ""}</div><div class="rx-signature"><div class="rx-signature-box"><b>${esc(r.doctor?.name || "MÉDICO")}</b><br>FIRMA</div></div></footer></article>`;
+    <footer class="rx-footer"><div class="rx-notes"><b>INDICACIONES COMPLEMENTARIAS:</b>${r.nonPharmacological ? ` ${esc(r.nonPharmacological)}` : ""}</div><div class="rx-pharmacy-contact"><span>${esc(r.pharmacy?.address || "DIRECCIÓN PENDIENTE DEL SISTEMA PRINCIPAL")}</span><span>${r.pharmacy?.phone ? `TEL. ${esc(r.pharmacy.phone)}` : "TELÉFONO PENDIENTE"}</span></div><div class="rx-signature"><div class="rx-signature-box"><b>${esc(doctorName)}</b><br>FIRMA</div></div></footer></article>`;
 }
 
 function prescriptionSheetHtml(recipe) {
@@ -1159,7 +1185,7 @@ function bindEvents() {
     const sendRecipe = event.target.closest("[data-send-prescription]");
     if (sendRecipe) sendPrescriptionToPharmacy(sendRecipe.dataset.sendPrescription, sendRecipe.dataset.patient).catch((error) => toast(error.message, "error"));
     const editDoctor = event.target.closest("[data-edit-doctor]");
-    if (editDoctor) fillDoctorEditor(editDoctor.dataset.editDoctor);
+    if (editDoctor) openDoctorEditor(editDoctor.dataset.editDoctor);
     const useDoctor = event.target.closest("[data-use-doctor]");
     if (useDoctor) chooseDoctor(useDoctor.dataset.useDoctor).catch((error) => toast(error.message, "error"));
     const removeDoctor = event.target.closest("[data-remove-doctor]");
@@ -1195,8 +1221,8 @@ function bindEvents() {
   $("clinical-settings-form").addEventListener("submit", (event) => saveMedicalSettings(event).catch((error) => toast(error.message, "error")));
   $("clinical-contact-form").addEventListener("submit", (event) => saveClinicalContact(event).catch((error) => toast(error.message, "error")));
   $("folio-settings-form").addEventListener("submit", (event) => saveFolioSettings(event).catch((error) => toast(error.message, "error")));
-  $("btn-new-doctor").addEventListener("click", () => { if (Object.keys(APP.medicalConfig?.profiles || {}).length >= 4) return toast("Ya existen cuatro médicos. Edita o elimina un perfil.", "error"); fillDoctorEditor(""); });
-  $("btn-cancel-doctor-edit").addEventListener("click", () => fillDoctorEditor(APP.selectedDoctorId));
+  $("btn-new-doctor").addEventListener("click", () => { if (Object.keys(APP.medicalConfig?.profiles || {}).length >= 4) return toast("Ya existen cuatro médicos. Edita o elimina un perfil.", "error"); openDoctorEditor(""); });
+  $("btn-cancel-doctor-edit").addEventListener("click", closeDoctorEditor);
   $("btn-enable-folio-edit").addEventListener("click", () => enableFolioEditing(true));
   $("settings-university-crest").addEventListener("change", (event) => optimizeImageFile(event.target.files?.[0]).then((data) => { APP.leftImageDraft = data; setImagePreview("settings-university-crest-preview", data); toast("Imagen izquierda cargada. Guarda el médico para conservarla.", "ok"); }).catch((error) => toast(error.message, "error")));
   $("settings-doctor-signature").addEventListener("change", (event) => optimizeImageFile(event.target.files?.[0]).then((data) => { APP.rightImageDraft = data; setImagePreview("settings-doctor-signature-preview", data); toast("Imagen derecha cargada. Guarda el médico para conservarla.", "ok"); }).catch((error) => toast(error.message, "error")));
