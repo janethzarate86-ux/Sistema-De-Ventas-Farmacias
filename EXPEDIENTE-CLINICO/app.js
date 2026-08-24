@@ -44,6 +44,11 @@ const newId = (prefix) => `${prefix}_${Date.now().toString(36)}_${crypto.getRand
 const safeFile = (value) => normalize(value).replace(/\s+/g, "_").slice(0, 80) || "EXPEDIENTE";
 const firebaseKey = (value) => String(value).replace(/[.#$\[\]/]/g, "_");
 const jsonQueryValue = (value) => JSON.stringify(value);
+const prescriptionQuantity = window.MacroxelPrescriptionQuantity;
+
+if (!prescriptionQuantity?.infer || !prescriptionQuantity?.effective) {
+  throw new Error("No se pudo iniciar el cálculo seguro de cantidades para farmacia.");
+}
 
 function toast(message, type = "") {
   const el = $("toast");
@@ -824,11 +829,23 @@ async function removeDoctorProfile(doctorId) {
 }
 
 function blankPrescriptionLine(product = null) {
-  return {
+  const line = {
     lineId: newId("rxline"), inventoryId: product?.id || "", productCode: product?.codigo || "", genericName: product?.generica || product?.nombre || "",
     brandName: product?.distintiva || "", presentation: product?.presentacion || "", concentration: "", pharmaceuticalForm: "", route: "ORAL",
-    dose: "", frequency: "", duration: "", quantityToDispense: "", instructions: "", price: Number(product?.precioVenta || 0) || 0
+    dose: "", frequency: "", duration: "", quantityToDispense: "", quantityAuto: true, instructions: "", price: Number(product?.precioVenta || 0) || 0
   };
+  if (product) line.quantityToDispense = prescriptionQuantity.infer(line).quantity;
+  return line;
+}
+
+function pharmacyQuantityDetection(line) {
+  return prescriptionQuantity.infer(line);
+}
+
+function pharmacyQuantityHelper(line) {
+  const detected = pharmacyQuantityDetection(line);
+  if (detected.source === "DEFAULT") return "Cantidad inicial: 1 pza. Puedes editarla antes de guardar.";
+  return `Detectado en el producto: ${detected.quantity} ${detected.unit}. Editable; solo se envía a farmacia.`;
 }
 
 function renderPrescriptionLines() {
@@ -839,7 +856,7 @@ function renderPrescriptionLines() {
     <label class="span-2">Denominación genérica<input data-rx-field="genericName" value="${esc(line.genericName)}" required maxlength="220"></label><label class="span-2">Denominación distintiva<input data-rx-field="brandName" value="${esc(line.brandName)}" maxlength="220"></label>
     <label>Forma farmacéutica (opcional)<input data-rx-field="pharmaceuticalForm" value="${esc(line.pharmaceuticalForm)}" maxlength="100" placeholder="TABLETA"></label><label>Concentración (opcional)<input data-rx-field="concentration" value="${esc(line.concentration)}" maxlength="100" placeholder="500 MG"></label><label class="span-2">Presentación / contenido (opcional)<input data-rx-field="presentation" value="${esc(line.presentation)}" maxlength="180" placeholder="CAJA CON 20 TABLETAS"></label>
     <label>Vía<select data-rx-field="route">${routeOptions.map((route) => `<option${route === line.route ? " selected" : ""}>${route}</option>`).join("")}</select></label><label>Dosis<input data-rx-field="dose" value="${esc(line.dose)}" required maxlength="120" placeholder="1 TABLETA"></label><label>Frecuencia<input data-rx-field="frequency" value="${esc(line.frequency)}" required maxlength="120" placeholder="CADA 8 HORAS"></label><label>Duración<input data-rx-field="duration" value="${esc(line.duration)}" required maxlength="120" placeholder="7 DÍAS"></label>
-    <label>Piezas a surtir (opcional)<input data-rx-field="quantityToDispense" type="number" min="1" max="999" step="1" value="${esc(line.quantityToDispense)}"></label><label class="span-3">Indicaciones específicas<textarea data-rx-field="instructions" maxlength="600" placeholder="Tomar con alimentos, precauciones u horario">${esc(line.instructions)}</textarea></label>
+    <label>Cantidad para farmacia (pzs; no se imprime)<input data-rx-field="quantityToDispense" type="number" min="1" max="999" step="1" value="${esc(line.quantityToDispense || pharmacyQuantityDetection(line).quantity)}"><small data-rx-quantity-help>${esc(pharmacyQuantityHelper(line))}</small></label><label class="span-3">Indicaciones específicas<textarea data-rx-field="instructions" maxlength="600" placeholder="Tomar con alimentos, precauciones u horario">${esc(line.instructions)}</textarea></label>
   </div></article>`).join("");
   renderPrescriptionPreview();
 }
@@ -847,7 +864,18 @@ function renderPrescriptionLines() {
 function updatePrescriptionLineFromElement(element) {
   const container = element.closest("[data-rx-line-id]"); if (!container) return;
   const line = APP.prescriptionLines.find((item) => item.lineId === container.dataset.rxLineId); if (!line) return;
-  line[element.dataset.rxField] = element.value;
+  const field = element.dataset.rxField;
+  line[field] = element.value;
+  if (field === "quantityToDispense") {
+    line.quantityAuto = false;
+  } else if (["genericName", "brandName", "presentation", "pharmaceuticalForm"].includes(field) && line.quantityAuto !== false) {
+    const detected = pharmacyQuantityDetection(line);
+    line.quantityToDispense = detected.quantity;
+    const quantityInput = container.querySelector('[data-rx-field="quantityToDispense"]');
+    if (quantityInput) quantityInput.value = String(detected.quantity);
+    const help = container.querySelector("[data-rx-quantity-help]");
+    if (help) help.textContent = pharmacyQuantityHelper(line);
+  }
   renderPrescriptionPreview();
 }
 
@@ -953,14 +981,14 @@ function prescriptionPaperHtml(recipe) {
   const doctorName = titledDoctorName(r.doctor);
   const medicineRows = (r.items || []).length ? r.items.map((line, index) => {
     const descriptor = [line.brandName, line.pharmaceuticalForm, line.concentration, line.presentation].filter(Boolean).join(" · ");
-    const directions = [`DOSIS ${line.dose || "—"}`, `VÍA ${line.route || "—"}`, `FRECUENCIA ${line.frequency || "—"}`, `DURACIÓN ${line.duration || "—"}`, Number(line.quantityToDispense) > 0 ? `SURTIR ${line.quantityToDispense}` : "", line.instructions || ""].filter(Boolean).join(" · ");
+    const directions = [`DOSIS ${line.dose || "—"}`, `VÍA ${line.route || "—"}`, `FRECUENCIA ${line.frequency || "—"}`, `DURACIÓN ${line.duration || "—"}`, line.instructions || ""].filter(Boolean).join(" · ");
     return `<tr><td>${index + 1}</td><td><b>${esc(line.genericName || "MEDICAMENTO")}</b>${descriptor ? ` · ${esc(descriptor)}` : ""} — ${esc(directions)}</td></tr>`;
   }).join("") : '<tr><td colspan="2">Sin medicamentos capturados.</td></tr>';
   return `<article class="prescription-paper"><header class="rx-head">${leftImage ? `<img class="rx-logo rx-logo-left" src="${leftImage}" alt="Imagen superior izquierda">` : '<div class="rx-logo rx-logo-left"></div>'}<div class="rx-head-center"><h2>${esc(doctorName)}</h2><p class="rx-doctor-line"><span>CÉDULA ${esc(r.doctor?.license || "PENDIENTE")}</span><span class="rx-doctor-part">${esc(r.doctor?.profession || "PROFESIÓN")}</span>${r.doctor?.specialty ? `<span class="rx-doctor-part">${esc(r.doctor.specialty)}</span>` : ""}<span class="rx-doctor-part">${esc(r.doctor?.university || "INSTITUCIÓN FORMADORA")}</span></p></div>${rightImage ? `<img class="rx-logo rx-logo-right" src="${rightImage}" alt="Imagen superior derecha">` : '<div class="rx-logo rx-logo-right"></div>'}</header>
     <section class="rx-folio-row"><b class="rx-folio">${esc(r.folio || formatPrescriptionFolio())}</b></section>
     <section class="rx-patient"><span class="rx-patient-name"><b>PACIENTE:</b> ${esc(r.patient?.name || "NOMBRE DEL PACIENTE")}</span><span class="rx-patient-date"><b>FECHA:</b> ${esc(formatDate(r.issuedAt, true))}</span><span><b>EDAD:</b> ${esc(r.patient?.age ?? "—")}</span><span><b>SEXO:</b> ${esc(r.patient?.sex || "—")}</span><span><b>PESO:</b> ${esc(r.patient?.weightKg ?? "—")} kg</span><span><b>TALLA:</b> ${esc(r.patient?.heightCm ?? "—")} cm</span><span><b>IMC:</b> ${esc(r.patient?.bmi ?? "—")}</span><span><b>TEMP.:</b> ${esc(r.patient?.temperatureC ?? "—")} °C</span><span><b>TA:</b> ${esc(r.patient?.bloodPressure?.systolic ?? "—")}/${esc(r.patient?.bloodPressure?.diastolic ?? "—")} mmHg</span><span></span><span class="wide"><b>ALERGIAS:</b> ${esc(r.patient?.allergies || "—")}</span><span class="wide"><b>DIAGNÓSTICO:</b> ${esc(r.diagnosis || "—")}</span></section>
     <table class="rx-medications"><thead><tr><th>#</th><th>MEDICAMENTO E INDICACIONES</th></tr></thead><tbody>${medicineRows}</tbody></table>
-    <footer class="rx-footer"><div class="rx-notes"><b>INDICACIONES COMPLEMENTARIAS:</b>${r.nonPharmacological ? ` ${esc(r.nonPharmacological)}` : ""}</div><div class="rx-pharmacy-contact"><span>${esc(r.pharmacy?.address || "DIRECCIÓN PENDIENTE DEL SISTEMA PRINCIPAL")}</span><span>${r.pharmacy?.phone ? `TEL. ${esc(r.pharmacy.phone)}` : "TELÉFONO PENDIENTE"}</span></div><div class="rx-signature"><div class="rx-signature-box"><b>${esc(doctorName)}</b><br>FIRMA</div></div></footer></article>`;
+    <footer class="rx-footer"><div class="rx-signature"><div class="rx-signature-box"><b>${esc(doctorName)}</b><br>FIRMA</div></div><div class="rx-footer-bottom"><div class="rx-notes"><b>INDICACIONES COMPLEMENTARIAS:</b>${r.nonPharmacological ? ` ${esc(r.nonPharmacological)}` : ""}</div><div class="rx-pharmacy-contact"><span>${esc(r.pharmacy?.address || "DIRECCIÓN PENDIENTE DEL SISTEMA PRINCIPAL")}</span><span>${r.pharmacy?.phone ? `TEL. ${esc(r.pharmacy.phone)}` : "TELÉFONO PENDIENTE"}</span></div></div></footer></article>`;
 }
 
 function prescriptionSheetHtml(recipe) {
@@ -991,7 +1019,7 @@ function validatePrescriptionLines(lines) {
     const item = { ...line, genericName: text(line.genericName, ""), pharmaceuticalForm: text(line.pharmaceuticalForm, ""), concentration: text(line.concentration, ""), presentation: text(line.presentation, ""), route: text(line.route, ""), dose: text(line.dose, ""), frequency: text(line.frequency, ""), duration: text(line.duration, ""), quantityToDispense };
     if (!item.genericName || !item.route || !item.dose || !item.frequency || !item.duration) throw new Error(`Completa los datos clínicos obligatorios del medicamento ${index + 1}.`);
     if (quantityToDispense !== null && (!Number.isInteger(quantityToDispense) || quantityToDispense < 1 || quantityToDispense > 999)) throw new Error(`La cantidad opcional del medicamento ${index + 1} no es válida.`);
-    delete item.lineId; return item;
+    delete item.lineId; delete item.quantityAuto; return item;
   });
 }
 
@@ -1083,11 +1111,11 @@ async function sendPrescriptionToPharmacy(id, patientId) {
   const linked = (recipe.items || []).filter((item) => item.productCode && item.inventoryId);
   if (!linked.length) throw new Error("La receta no contiene medicamentos vinculados al inventario. Agrégalos desde el buscador para enviarlos al carrito.");
   if (linked.length !== (recipe.items || []).length && !window.confirm("Algunos medicamentos fueron capturados manualmente y no pueden vincularse al inventario. ¿Enviar únicamente los productos vinculados?")) return;
-  if (linked.some((item) => !Number.isInteger(Number(item.quantityToDispense)) || Number(item.quantityToDispense) < 1)) throw new Error("Para enviar a farmacia, captura las piezas a surtir de cada producto vinculado.");
+  const linkedWithQuantity = linked.map((item) => ({ ...item, quantityToDispense: prescriptionQuantity.effective(item) }));
   let channel = await db(`expediente_clinico/${APP.config.storeId}/canal_farmacia`).catch(() => null);
   if (!channel?.publicKey?.n || !channel?.keyId) channel = await db(`mi_farmacia/tiendas/${APP.config.storeId}`).catch(() => null);
   const orderId = firebaseKey(`RX-${id}`).slice(0, 120); const createdAt = isoNow();
-  const items = linked.map((item) => ({ idProducto: item.inventoryId, codigo: item.productCode, generica: item.genericName, distintiva: item.brandName || "", nombre: [item.genericName, item.brandName].filter(Boolean).join(" "), presentacion: item.presentation, cantidad: Number(item.quantityToDispense), precioUnitario: Number(item.price || 0), importe: Number(item.price || 0) * Number(item.quantityToDispense) }));
+  const items = linkedWithQuantity.map((item) => ({ idProducto: item.inventoryId, codigo: item.productCode, generica: item.genericName, distintiva: item.brandName || "", nombre: [item.genericName, item.brandName].filter(Boolean).join(" "), presentacion: item.presentation, cantidad: Number(item.quantityToDispense), precioUnitario: Number(item.price || 0), importe: Number(item.price || 0) * Number(item.quantityToDispense) }));
   const piezas = items.reduce((sum, item) => sum + item.cantidad, 0); const totalEstimado = items.reduce((sum, item) => sum + item.importe, 0);
   const contenidoCifrado = await encryptPharmacyOrder({ cliente: { nombre: recipe.patient?.name || "PACIENTE", telefono: recipe.patient?.phone || "" }, observaciones: `RECETA ${recipe.folio} · ${recipe.type}`, entrega: { tipo: "RECOGER_SUCURSAL" }, items, piezas, totalEstimado }, channel);
   const order = { version: 1, origen: "RECETARIO_CLINICO", id: orderId, tiendaId: APP.config.storeId, tiendaNombre: APP.config.pharmacyName, estado: "NUEVO", recetaFolio: recipe.folio, prescriptionId: id, creadoEn: createdAt, actualizadoEn: createdAt, contenidoCifrado };
