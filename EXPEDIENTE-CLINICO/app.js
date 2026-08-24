@@ -9,14 +9,16 @@ const APP = {
   recentPatients: [],
   inventoryRows: [],
   medicalConfig: null,
+  selectedDoctorId: "",
+  editingDoctorId: "",
   folioControl: null,
   prescriptionLines: [],
   prescriptionSearchRows: [],
   prescriptionHistory: [],
   selectedPrescription: null,
   folioEditEnabled: false,
-  crestDraft: "",
-  signatureDraft: "",
+  leftImageDraft: "",
+  rightImageDraft: "",
   backupHandle: null,
   toastTimer: null
 };
@@ -555,10 +557,38 @@ function safeDataImage(value) {
 }
 
 function defaultMedicalConfig() {
+  return { pharmacyPhone: APP.config?.pharmacyPhone || "", selectedDoctorId: "", profiles: {}, updatedAt: "", updatedBy: "", schemaVersion: 2 };
+}
+
+function normalizedDoctorProfile(value, id = "") {
+  const raw = value && typeof value === "object" ? value : {};
   return {
-    doctorName: "", doctorLicense: "", doctorProfession: "MÉDICO CIRUJANO", doctorSpecialty: "MEDICINA GENERAL",
-    doctorUniversity: "", pharmacyPhone: APP.config?.pharmacyPhone || "", universityCrest: "", doctorSignature: ""
+    id: firebaseKey(raw.id || id || newId("MEDICO")).slice(0, 80), doctorName: text(raw.doctorName, ""),
+    doctorLicense: text(raw.doctorLicense, ""), doctorProfession: text(raw.doctorProfession, "MÉDICO CIRUJANO"),
+    doctorSpecialty: text(raw.doctorSpecialty, "MEDICINA GENERAL"), doctorUniversity: text(raw.doctorUniversity, ""),
+    leftHeaderImage: safeDataImage(raw.leftHeaderImage || raw.universityCrest), rightHeaderImage: safeDataImage(raw.rightHeaderImage || raw.doctorSignature),
+    updatedAt: raw.updatedAt || "", updatedBy: raw.updatedBy || "", schemaVersion: 1
   };
+}
+
+function normalizedMedicalConfig(value) {
+  const raw = value && typeof value === "object" ? value : {};
+  const profiles = {};
+  if (raw.profiles && typeof raw.profiles === "object") {
+    Object.entries(raw.profiles).slice(0, 4).forEach(([id, profile]) => { const normalized = normalizedDoctorProfile(profile, id); profiles[normalized.id] = normalized; });
+  } else if (raw.doctorName) {
+    const legacy = normalizedDoctorProfile(raw, "MEDICO_PRINCIPAL"); profiles[legacy.id] = legacy;
+  }
+  const ids = Object.keys(profiles); const selectedDoctorId = profiles[raw.selectedDoctorId] ? raw.selectedDoctorId : (ids[0] || "");
+  return { pharmacyPhone: text(raw.pharmacyPhone, APP.config?.pharmacyPhone || ""), selectedDoctorId, profiles, updatedAt: raw.updatedAt || "", updatedBy: raw.updatedBy || "", schemaVersion: 2 };
+}
+
+function selectedDoctor(config = APP.medicalConfig, doctorId = APP.selectedDoctorId) {
+  const cfg = normalizedMedicalConfig(config); return cfg.profiles[doctorId] || cfg.profiles[cfg.selectedDoctorId] || Object.values(cfg.profiles)[0] || null;
+}
+
+function doctorProfileComplete(profile) {
+  return !!(profile?.doctorName && profile?.doctorLicense && profile?.doctorProfession && profile?.doctorUniversity);
 }
 
 function defaultFolioControl() {
@@ -579,8 +609,8 @@ function formatPrescriptionFolio(control = APP.folioControl, number = null) {
   return `${cfg.prefix}-${String(value).padStart(cfg.width, "0")}`;
 }
 
-function medicalConfigComplete(config = APP.medicalConfig) {
-  return !!(config?.doctorName && config?.doctorLicense && config?.doctorProfession && config?.doctorUniversity && config?.pharmacyPhone && APP.config?.pharmacyAddress);
+function medicalConfigComplete(config = APP.medicalConfig, doctorId = APP.selectedDoctorId) {
+  const cfg = normalizedMedicalConfig(config); return !!(doctorProfileComplete(selectedDoctor(cfg, doctorId)) && cfg.pharmacyPhone && APP.config?.pharmacyAddress);
 }
 
 function firebaseUrlForPath(path) {
@@ -635,30 +665,45 @@ async function optimizeImageFile(file, maxSide = 520) {
   } finally { URL.revokeObjectURL(url); }
 }
 
+function fillDoctorEditor(doctorId = "") {
+  const profile = doctorId ? APP.medicalConfig?.profiles?.[doctorId] : null;
+  APP.editingDoctorId = profile?.id || ""; $("settings-doctor-id").value = APP.editingDoctorId;
+  $("settings-doctor-name").value = profile?.doctorName || "";
+  $("settings-doctor-license").value = profile?.doctorLicense || "";
+  $("settings-doctor-profession").value = profile?.doctorProfession || "MÉDICO CIRUJANO";
+  $("settings-doctor-specialty").value = profile?.doctorSpecialty || "MEDICINA GENERAL";
+  $("settings-doctor-university").value = profile?.doctorUniversity || "";
+  APP.leftImageDraft = safeDataImage(profile?.leftHeaderImage); APP.rightImageDraft = safeDataImage(profile?.rightHeaderImage);
+  setImagePreview("settings-university-crest-preview", APP.leftImageDraft); setImagePreview("settings-doctor-signature-preview", APP.rightImageDraft);
+  $("settings-university-crest").value = ""; $("settings-doctor-signature").value = ""; $("settings-confirm").checked = false;
+}
+
+function renderDoctorProfiles() {
+  const profiles = Object.values(APP.medicalConfig?.profiles || {}); const selectedId = APP.selectedDoctorId || APP.medicalConfig?.selectedDoctorId || "";
+  $("doctor-profiles-list").innerHTML = profiles.length ? profiles.map((profile) => `<article class="doctor-profile-card${profile.id === selectedId ? " selected" : ""}"><div><b>${esc(profile.doctorName)}</b><span>Cédula ${esc(profile.doctorLicense)} · ${esc(profile.doctorSpecialty || profile.doctorProfession)}</span>${profile.id === selectedId ? '<small>SELECCIONADO PARA RECETAR</small>' : ""}</div><div class="doctor-profile-actions"><button class="link-btn" type="button" data-use-doctor="${esc(profile.id)}">Usar</button><button class="link-btn" type="button" data-edit-doctor="${esc(profile.id)}">Editar</button><button class="link-btn danger" type="button" data-remove-doctor="${esc(profile.id)}">Eliminar</button></div></article>`).join("") : '<div class="empty">Sin médicos configurados. Agrega el primero para emitir recetas.</div>';
+  const selector = $("prescription-doctor"); const current = APP.selectedDoctorId || selectedId;
+  selector.innerHTML = profiles.length ? profiles.map((profile) => `<option value="${esc(profile.id)}"${profile.id === current ? " selected" : ""}>${esc(profile.doctorName)} · CÉD. ${esc(profile.doctorLicense)}</option>`).join("") : '<option value="">Configura y selecciona un médico</option>';
+  APP.selectedDoctorId = selector.value || "";
+}
+
 function fillMedicalSettingsForm() {
-  const cfg = { ...defaultMedicalConfig(), ...(APP.medicalConfig || {}) };
-  $("settings-doctor-name").value = cfg.doctorName || "";
-  $("settings-doctor-license").value = cfg.doctorLicense || "";
-  $("settings-doctor-profession").value = cfg.doctorProfession || "MÉDICO CIRUJANO";
-  $("settings-doctor-specialty").value = cfg.doctorSpecialty || "MEDICINA GENERAL";
-  $("settings-doctor-university").value = cfg.doctorUniversity || "";
+  const cfg = normalizedMedicalConfig(APP.medicalConfig);
+  APP.medicalConfig = cfg; APP.selectedDoctorId = cfg.profiles[APP.selectedDoctorId] ? APP.selectedDoctorId : cfg.selectedDoctorId;
   $("settings-pharmacy-address").value = APP.config?.pharmacyAddress || "";
   $("settings-pharmacy-phone").value = cfg.pharmacyPhone || APP.config?.pharmacyPhone || "";
-  APP.crestDraft = safeDataImage(cfg.universityCrest);
-  APP.signatureDraft = safeDataImage(cfg.doctorSignature);
-  setImagePreview("settings-university-crest-preview", APP.crestDraft);
-  setImagePreview("settings-doctor-signature-preview", APP.signatureDraft);
+  renderDoctorProfiles();
   const folio = normalizedFolioControl(APP.folioControl);
   $("settings-folio-prefix").value = folio.prefix;
   $("settings-folio-next").value = String(folio.nextNumber);
   $("settings-folio-width").value = String(folio.width);
   $("prescription-next-folio").textContent = `Próximo folio: ${formatPrescriptionFolio(folio)}`;
-  const complete = medicalConfigComplete(cfg);
+  const complete = medicalConfigComplete(cfg, APP.selectedDoctorId);
   $("prescription-config-badge").textContent = complete ? "Configuración completa" : "Completar configuración";
   $("prescription-config-badge").className = `badge ${complete ? "ok" : "warn"}`;
-  if ($("doctor-name") && !$("doctor-name").value) $("doctor-name").value = cfg.doctorName || "";
-  if ($("doctor-license") && !$("doctor-license").value) $("doctor-license").value = cfg.doctorLicense || "";
-  if ($("doctor-specialty") && !$("doctor-specialty").value) $("doctor-specialty").value = cfg.doctorSpecialty || "";
+  const doctor = selectedDoctor(cfg, APP.selectedDoctorId);
+  if ($("doctor-name") && !$("doctor-name").value) $("doctor-name").value = doctor?.doctorName || "";
+  if ($("doctor-license") && !$("doctor-license").value) $("doctor-license").value = doctor?.doctorLicense || "";
+  if ($("doctor-specialty") && !$("doctor-specialty").value) $("doctor-specialty").value = doctor?.doctorSpecialty || "";
 }
 
 async function loadMedicalSettings() {
@@ -666,9 +711,10 @@ async function loadMedicalSettings() {
     db(`expediente_clinico/${APP.config.storeId}/configuracion_medicos/${APP.auth.uid}`).catch(() => null),
     db(`expediente_clinico/${APP.config.storeId}/folios_recetas/control`).catch(() => null)
   ]);
-  APP.medicalConfig = { ...defaultMedicalConfig(), ...(config || {}) };
+  APP.medicalConfig = normalizedMedicalConfig(config || defaultMedicalConfig()); APP.selectedDoctorId = APP.medicalConfig.selectedDoctorId;
   APP.folioControl = normalizedFolioControl(folio);
   fillMedicalSettingsForm();
+  fillDoctorEditor(APP.selectedDoctorId);
   renderPrescriptionPreview();
   return APP.medicalConfig;
 }
@@ -681,44 +727,65 @@ function enableFolioEditing(enabled = true) {
   $("btn-enable-folio-edit").disabled = enabled;
 }
 
+async function persistMedicalConfig(config, action) {
+  const saved = normalizedMedicalConfig({ ...config, updatedAt: isoNow(), updatedBy: APP.auth.uid, schemaVersion: 2 });
+  await commitEvent({ id: newId("evt_medical_config"), createdAt: saved.updatedAt, operations: [
+    { method: "PUT", path: `expediente_clinico/${APP.config.storeId}/configuracion_medicos/${APP.auth.uid}`, body: saved },
+    { method: "PUT", path: `expediente_clinico/${APP.config.storeId}/auditoria/${newId("audit")}`, body: { action, createdAt: saved.updatedAt, uid: APP.auth.uid, email: APP.auth.email } }
+  ]});
+  APP.medicalConfig = saved; APP.selectedDoctorId = saved.selectedDoctorId; return saved;
+}
+
 async function saveMedicalSettings(event) {
   event.preventDefault();
-  if (!APP.config.pharmacyAddress) throw new Error("La dirección no llegó desde el sistema principal. Regenera macroxel-config.json desde Configuración.");
-  const config = {
+  const profiles = { ...(APP.medicalConfig?.profiles || {}) }; let doctorId = APP.editingDoctorId || firebaseKey(newId("MEDICO").toUpperCase()).slice(0, 80);
+  if (!profiles[doctorId] && Object.keys(profiles).length >= 4) throw new Error("Ya existen cuatro médicos. Edita o elimina un perfil antes de agregar otro.");
+  const profile = normalizedDoctorProfile({
+    id: doctorId,
     doctorName: $("settings-doctor-name").value.trim(), doctorLicense: $("settings-doctor-license").value.trim(),
     doctorProfession: $("settings-doctor-profession").value.trim(), doctorSpecialty: $("settings-doctor-specialty").value.trim(),
-    doctorUniversity: $("settings-doctor-university").value.trim(), pharmacyPhone: $("settings-pharmacy-phone").value.trim(),
-    universityCrest: safeDataImage(APP.crestDraft), doctorSignature: safeDataImage(APP.signatureDraft),
+    doctorUniversity: $("settings-doctor-university").value.trim(), leftHeaderImage: safeDataImage(APP.leftImageDraft), rightHeaderImage: safeDataImage(APP.rightImageDraft),
     updatedAt: isoNow(), updatedBy: APP.auth.uid, schemaVersion: 1
-  };
-  if (!medicalConfigComplete(config)) throw new Error("Completa nombre, cédula, profesión, universidad, dirección y teléfono de la farmacia.");
-  if (APP.folioEditEnabled) {
-    if (!$("settings-folio-confirm").checked || normalize($("settings-folio-phrase").value) !== "CAMBIAR FOLIO") throw new Error("Confirma el cambio y escribe CAMBIAR FOLIO.");
-    const prefix = normalize($("settings-folio-prefix").value).replace(/\s+/g, "-").slice(0, 12);
-    const nextNumber = Math.trunc(Number($("settings-folio-next").value));
-    const width = Math.trunc(Number($("settings-folio-width").value));
-    if (!/^[A-Z0-9-]{1,12}$/.test(prefix) || !Number.isInteger(nextNumber) || nextNumber < 1 || width < 3 || width > 10) throw new Error("El control de folios no es válido.");
-    await updateFolioTransaction((current) => {
-      if (nextNumber <= current.lastIssued) throw new Error(`El siguiente folio debe ser mayor a ${current.lastIssued}; los folios emitidos no pueden reutilizarse.`);
-      return { ...current, prefix, nextNumber, width, updatedAt: isoNow(), updatedBy: APP.auth.uid };
-    });
-  }
-  await commitEvent({ id: newId("evt_medical_config"), createdAt: config.updatedAt, operations: [
-    { method: "PUT", path: `expediente_clinico/${APP.config.storeId}/configuracion_medicos/${APP.auth.uid}`, body: config },
-    { method: "PUT", path: `expediente_clinico/${APP.config.storeId}/auditoria/${newId("audit")}`, body: { action: "PRESCRIPTION_SETTINGS_UPDATED", createdAt: config.updatedAt, uid: APP.auth.uid, email: APP.auth.email } }
-  ]});
-  APP.medicalConfig = config;
-  enableFolioEditing(false);
-  $("settings-folio-confirm").checked = false; $("settings-folio-phrase").value = ""; $("settings-confirm").checked = false;
-  fillMedicalSettingsForm(); renderPrescriptionPreview();
-  toast("Configuración médica guardada correctamente.", "ok");
+  }, doctorId);
+  if (!doctorProfileComplete(profile)) throw new Error("Completa nombre, cédula, profesión y universidad del médico.");
+  profiles[doctorId] = profile; await persistMedicalConfig({ ...APP.medicalConfig, profiles, selectedDoctorId: APP.selectedDoctorId || doctorId }, "PRESCRIPTION_DOCTOR_SAVED");
+  APP.selectedDoctorId = APP.medicalConfig.selectedDoctorId; fillMedicalSettingsForm(); fillDoctorEditor(doctorId); renderPrescriptionPreview();
+  toast(`Médico ${profile.doctorName} guardado correctamente.`, "ok");
+}
+
+async function saveClinicalContact(event) {
+  event.preventDefault(); if (!APP.config.pharmacyAddress) throw new Error("La dirección no llegó desde el sistema principal. Regenera macroxel-config.json desde Configuración.");
+  const pharmacyPhone = $("settings-pharmacy-phone").value.trim(); if (!pharmacyPhone) throw new Error("Captura el teléfono de la farmacia.");
+  await persistMedicalConfig({ ...APP.medicalConfig, pharmacyPhone }, "PRESCRIPTION_CONTACT_SAVED"); fillMedicalSettingsForm(); renderPrescriptionPreview(); toast("Teléfono de la farmacia guardado.", "ok");
+}
+
+async function saveFolioSettings(event) {
+  event.preventDefault(); if (!APP.folioEditEnabled) throw new Error("Primero selecciona Editar control.");
+  if (!$("settings-folio-confirm").checked || normalize($("settings-folio-phrase").value) !== "CAMBIAR FOLIO") throw new Error("Confirma el cambio y escribe CAMBIAR FOLIO.");
+  const prefix = normalize($("settings-folio-prefix").value).replace(/\s+/g, "-").slice(0, 12); const nextNumber = Math.trunc(Number($("settings-folio-next").value)); const width = Math.trunc(Number($("settings-folio-width").value));
+  if (!/^[A-Z0-9-]{1,12}$/.test(prefix) || !Number.isInteger(nextNumber) || nextNumber < 1 || width < 3 || width > 10) throw new Error("El control de folios no es válido.");
+  await updateFolioTransaction((current) => { if (nextNumber <= current.lastIssued) throw new Error(`El siguiente folio debe ser mayor a ${current.lastIssued}; los folios emitidos no pueden reutilizarse.`); return { ...current, prefix, nextNumber, width, updatedAt: isoNow(), updatedBy: APP.auth.uid }; });
+  await commitEvent({ id: newId("evt_folio_settings"), createdAt: isoNow(), operations: [{ method: "PUT", path: `expediente_clinico/${APP.config.storeId}/auditoria/${newId("audit")}`, body: { action: "PRESCRIPTION_FOLIO_SETTINGS_UPDATED", createdAt: isoNow(), uid: APP.auth.uid, email: APP.auth.email } }] });
+  enableFolioEditing(false); $("settings-folio-confirm").checked = false; $("settings-folio-phrase").value = ""; fillMedicalSettingsForm(); toast("Control de folios guardado.", "ok");
+}
+
+async function chooseDoctor(doctorId) {
+  if (!APP.medicalConfig?.profiles?.[doctorId]) return;
+  APP.selectedDoctorId = doctorId; await persistMedicalConfig({ ...APP.medicalConfig, selectedDoctorId: doctorId }, "PRESCRIPTION_DOCTOR_SELECTED"); fillMedicalSettingsForm(); renderPrescriptionPreview();
+}
+
+async function removeDoctorProfile(doctorId) {
+  const profile = APP.medicalConfig?.profiles?.[doctorId]; if (!profile) return;
+  if (!window.confirm(`¿Eliminar el perfil de ${profile.doctorName}? Las recetas históricas no se modificarán.`)) return;
+  const profiles = { ...APP.medicalConfig.profiles }; delete profiles[doctorId]; const selectedDoctorId = doctorId === APP.selectedDoctorId ? (Object.keys(profiles)[0] || "") : APP.selectedDoctorId;
+  await persistMedicalConfig({ ...APP.medicalConfig, profiles, selectedDoctorId }, "PRESCRIPTION_DOCTOR_REMOVED"); fillMedicalSettingsForm(); fillDoctorEditor(selectedDoctorId); renderPrescriptionPreview(); toast("Perfil médico eliminado.", "ok");
 }
 
 function blankPrescriptionLine(product = null) {
   return {
     lineId: newId("rxline"), inventoryId: product?.id || "", productCode: product?.codigo || "", genericName: product?.generica || product?.nombre || "",
     brandName: product?.distintiva || "", presentation: product?.presentacion || "", concentration: "", pharmaceuticalForm: "", route: "ORAL",
-    dose: "", frequency: "", duration: "", quantityToDispense: "1", instructions: "", price: Number(product?.precioVenta || 0) || 0
+    dose: "", frequency: "", duration: "", quantityToDispense: "", instructions: "", price: Number(product?.precioVenta || 0) || 0
   };
 }
 
@@ -728,9 +795,9 @@ function renderPrescriptionLines() {
   const routeOptions = ["ORAL", "TÓPICA", "OFTÁLMICA", "ÓTICA", "INHALADA", "INTRAMUSCULAR", "INTRAVENOSA", "SUBCUTÁNEA", "RECTAL", "VAGINAL", "OTRA"];
   target.innerHTML = APP.prescriptionLines.map((line, index) => `<article class="rx-line" data-rx-line-id="${esc(line.lineId)}"><div class="rx-line-head"><div><b>Medicamento ${index + 1}</b><span>${line.productCode ? `Vinculado al inventario · ${esc(line.productCode)}` : "Captura manual · no se enviará al carrito hasta vincularlo"}</span></div><button class="link-btn" type="button" data-remove-rx-line="${esc(line.lineId)}">Eliminar</button></div><div class="rx-line-grid">
     <label class="span-2">Denominación genérica<input data-rx-field="genericName" value="${esc(line.genericName)}" required maxlength="220"></label><label class="span-2">Denominación distintiva<input data-rx-field="brandName" value="${esc(line.brandName)}" maxlength="220"></label>
-    <label>Forma farmacéutica<input data-rx-field="pharmaceuticalForm" value="${esc(line.pharmaceuticalForm)}" required maxlength="100" placeholder="TABLETA"></label><label>Concentración<input data-rx-field="concentration" value="${esc(line.concentration)}" required maxlength="100" placeholder="500 MG"></label><label class="span-2">Presentación / contenido<input data-rx-field="presentation" value="${esc(line.presentation)}" required maxlength="180" placeholder="CAJA CON 20 TABLETAS"></label>
+    <label>Forma farmacéutica (opcional)<input data-rx-field="pharmaceuticalForm" value="${esc(line.pharmaceuticalForm)}" maxlength="100" placeholder="TABLETA"></label><label>Concentración (opcional)<input data-rx-field="concentration" value="${esc(line.concentration)}" maxlength="100" placeholder="500 MG"></label><label class="span-2">Presentación / contenido<input data-rx-field="presentation" value="${esc(line.presentation)}" required maxlength="180" placeholder="CAJA CON 20 TABLETAS"></label>
     <label>Vía<select data-rx-field="route">${routeOptions.map((route) => `<option${route === line.route ? " selected" : ""}>${route}</option>`).join("")}</select></label><label>Dosis<input data-rx-field="dose" value="${esc(line.dose)}" required maxlength="120" placeholder="1 TABLETA"></label><label>Frecuencia<input data-rx-field="frequency" value="${esc(line.frequency)}" required maxlength="120" placeholder="CADA 8 HORAS"></label><label>Duración<input data-rx-field="duration" value="${esc(line.duration)}" required maxlength="120" placeholder="7 DÍAS"></label>
-    <label>Cantidad a surtir<input data-rx-field="quantityToDispense" type="number" min="1" max="999" step="1" value="${esc(line.quantityToDispense)}" required></label><label class="span-3">Indicaciones específicas<textarea data-rx-field="instructions" maxlength="600" placeholder="Tomar con alimentos, precauciones u horario">${esc(line.instructions)}</textarea></label>
+    <label>Piezas a surtir (opcional)<input data-rx-field="quantityToDispense" type="number" min="1" max="999" step="1" value="${esc(line.quantityToDispense)}"></label><label class="span-3">Indicaciones específicas<textarea data-rx-field="instructions" maxlength="600" placeholder="Tomar con alimentos, precauciones u horario">${esc(line.instructions)}</textarea></label>
   </div></article>`).join("");
   renderPrescriptionPreview();
 }
@@ -757,25 +824,34 @@ function ageNumber(value) { const match = String(value || "").match(/\d+/); retu
 
 function prescriptionDraft() {
   const issue = $("prescription-datetime")?.value ? new Date($("prescription-datetime").value).toISOString() : isoNow();
+  const doctorId = $("prescription-doctor")?.value || APP.selectedDoctorId; const profile = selectedDoctor(APP.medicalConfig, doctorId);
   return {
     id: "", folio: formatPrescriptionFolio(), type: $("prescription-type")?.value || "ORDINARIA", issuedAt: issue,
     validUntil: $("prescription-valid-until")?.value || "", diagnosis: $("prescription-diagnosis")?.value.trim() || "",
     nonPharmacological: $("prescription-nonpharma")?.value.trim() || "", patientId: APP.selectedPatientId,
     patient: APP.selectedPatient ? { name: APP.selectedPatient.name, birthDate: APP.selectedPatient.birthDate, age: ageNumber(ageFromBirth(APP.selectedPatient.birthDate)), weightKg: $("prescription-patient-weight")?.value || "", phone: APP.selectedPatient.phone || "" } : {},
-    doctor: APP.medicalConfig ? { name: APP.medicalConfig.doctorName, license: APP.medicalConfig.doctorLicense, profession: APP.medicalConfig.doctorProfession, specialty: APP.medicalConfig.doctorSpecialty, university: APP.medicalConfig.doctorUniversity, crest: APP.medicalConfig.universityCrest, signature: APP.medicalConfig.doctorSignature } : {},
+    doctor: profile ? { id: profile.id, name: profile.doctorName, license: profile.doctorLicense, profession: profile.doctorProfession, specialty: profile.doctorSpecialty, university: profile.doctorUniversity, leftImage: profile.leftHeaderImage, rightImage: profile.rightHeaderImage } : {},
     pharmacy: { name: APP.config?.pharmacyName || "Farmacia", address: APP.config?.pharmacyAddress || "", phone: APP.medicalConfig?.pharmacyPhone || APP.config?.pharmacyPhone || "" },
     items: APP.prescriptionLines.map((line) => ({ ...line }))
   };
 }
 
 function prescriptionPaperHtml(recipe) {
-  const r = recipe || prescriptionDraft(); const crest = safeDataImage(r.doctor?.crest); const signature = safeDataImage(r.doctor?.signature);
-  const medicineRows = (r.items || []).length ? r.items.map((line, index) => `<tr><td>${index + 1}</td><td><b>${esc(line.genericName || "MEDICAMENTO")}</b>${line.brandName ? `<br>${esc(line.brandName)}` : ""}<br>${esc([line.pharmaceuticalForm, line.concentration, line.presentation].filter(Boolean).join(" · "))}</td><td>${esc([`VÍA ${line.route || "—"}`, `DOSIS: ${line.dose || "—"}`, `FRECUENCIA: ${line.frequency || "—"}`, `DURACIÓN: ${line.duration || "—"}`, `SURTIR: ${line.quantityToDispense || "—"}`, line.instructions || ""].filter(Boolean).join("\n"))}</td></tr>`).join("") : '<tr><td colspan="3">Sin medicamentos capturados.</td></tr>';
-  return `<article class="prescription-paper"><header class="rx-head">${crest ? `<img class="rx-logo" src="${crest}" alt="Escudo universitario">` : '<div class="rx-logo"></div>'}<div class="rx-head-center"><h2>${esc(r.pharmacy?.name || "FARMACIA")}</h2><p>${esc(r.pharmacy?.address || "DIRECCIÓN PENDIENTE DEL SISTEMA PRINCIPAL")}</p><p>${r.pharmacy?.phone ? `TEL. ${esc(r.pharmacy.phone)}` : "TELÉFONO PENDIENTE"}</p></div><div class="rx-folio"><b>${esc(r.folio || formatPrescriptionFolio())}</b><span>${esc(r.type || "ORDINARIA")}</span></div></header>
-    <section class="rx-doctor"><strong>${esc(r.doctor?.name || "NOMBRE DEL MÉDICO")}</strong><span>CÉDULA: ${esc(r.doctor?.license || "PENDIENTE")}</span><span>${esc(r.doctor?.profession || "PROFESIÓN")}${r.doctor?.specialty ? ` · ${esc(r.doctor.specialty)}` : ""}</span><span>${esc(r.doctor?.university || "INSTITUCIÓN FORMADORA")}</span></section>
-    <section class="rx-patient"><span class="wide"><b>PACIENTE:</b> ${esc(r.patient?.name || "SELECCIONAR PACIENTE")}</span><span><b>NACIMIENTO:</b> ${esc(r.patient?.birthDate || "—")}</span><span><b>EDAD:</b> ${esc(r.patient?.age ?? "—")}</span><span><b>PESO:</b> ${esc(r.patient?.weightKg || "—")} kg</span><span class="wide"><b>EMISIÓN:</b> ${esc(formatDate(r.issuedAt, true))} · <b>VIGENCIA:</b> ${esc(r.validUntil || "—")}</span><span class="wide"><b>IMPRESIÓN DIAGNÓSTICA:</b> ${esc(r.diagnosis || "—")}</span></section>
-    <table class="rx-medications"><thead><tr><th>#</th><th>MEDICAMENTO / PRESENTACIÓN</th><th>INDICACIONES</th></tr></thead><tbody>${medicineRows}</tbody></table>${r.nonPharmacological ? `<div class="rx-notes"><b>INDICACIONES COMPLEMENTARIAS</b><br>${esc(r.nonPharmacological)}</div>` : ""}
-    <div class="rx-signature"><div class="rx-signature-box">${signature ? `<img src="${signature}" alt="Firma digitalizada">` : ""}<b>${esc(r.doctor?.name || "MÉDICO")}</b><br>FIRMA AUTÓGRAFA O ELECTRÓNICA VALIDABLE</div></div><footer class="rx-footer">${r.integrityCode ? `CÓDIGO DE INTEGRIDAD: ${esc(r.integrityCode)} · ` : ""}Documento asociado al expediente ${esc(r.patientId || "—")}. Para antibióticos, surtir únicamente durante la duración indicada y aplicar el control sanitario correspondiente.</footer></article>`;
+  const r = recipe || prescriptionDraft(); const leftImage = safeDataImage(r.doctor?.leftImage || r.doctor?.crest); const rightImage = safeDataImage(r.doctor?.rightImage || r.doctor?.signature);
+  const medicineRows = (r.items || []).length ? r.items.map((line, index) => {
+    const descriptor = [line.brandName, line.pharmaceuticalForm, line.concentration, line.presentation].filter(Boolean).join(" · ");
+    const directions = [`DOSIS ${line.dose || "—"}`, `VÍA ${line.route || "—"}`, `FRECUENCIA ${line.frequency || "—"}`, `DURACIÓN ${line.duration || "—"}`, Number(line.quantityToDispense) > 0 ? `SURTIR ${line.quantityToDispense}` : "", line.instructions || ""].filter(Boolean).join(" · ");
+    return `<tr><td>${index + 1}</td><td><b>${esc(line.genericName || "MEDICAMENTO")}</b>${descriptor ? ` · ${esc(descriptor)}` : ""} — ${esc(directions)}</td></tr>`;
+  }).join("") : '<tr><td colspan="2">Sin medicamentos capturados.</td></tr>';
+  return `<article class="prescription-paper"><header class="rx-head">${leftImage ? `<img class="rx-logo rx-logo-left" src="${leftImage}" alt="Imagen superior izquierda">` : '<div class="rx-logo rx-logo-left"></div>'}<div class="rx-head-center"><h2>${esc(r.pharmacy?.name || "FARMACIA")}</h2><p>${esc(r.pharmacy?.address || "DIRECCIÓN PENDIENTE DEL SISTEMA PRINCIPAL")}</p><p>${r.pharmacy?.phone ? `TEL. ${esc(r.pharmacy.phone)}` : "TELÉFONO PENDIENTE"}</p></div>${rightImage ? `<img class="rx-logo rx-logo-right" src="${rightImage}" alt="Imagen superior derecha">` : '<div class="rx-logo rx-logo-right"></div>'}</header>
+    <section class="rx-doctor"><span><strong>${esc(r.doctor?.name || "NOMBRE DEL MÉDICO")}</strong> · CÉDULA ${esc(r.doctor?.license || "PENDIENTE")}</span><span>${esc(r.doctor?.profession || "PROFESIÓN")}${r.doctor?.specialty ? ` · ${esc(r.doctor.specialty)}` : ""} · ${esc(r.doctor?.university || "INSTITUCIÓN FORMADORA")}</span><b class="rx-folio">${esc(r.folio || formatPrescriptionFolio())} · ${esc(r.type || "ORDINARIA")}</b></section>
+    <section class="rx-patient"><span><b>PACIENTE:</b> ${esc(r.patient?.name || "SELECCIONAR PACIENTE")}</span><span><b>EDAD:</b> ${esc(r.patient?.age ?? "—")}</span><span><b>PESO:</b> ${esc(r.patient?.weightKg || "—")} kg</span><span><b>FECHA:</b> ${esc(formatDate(r.issuedAt, true))}</span><span class="wide"><b>IMPRESIÓN DIAGNÓSTICA:</b> ${esc(r.diagnosis || "—")}</span></section>
+    <table class="rx-medications"><thead><tr><th>#</th><th>MEDICAMENTO E INDICACIONES</th></tr></thead><tbody>${medicineRows}</tbody></table>${r.nonPharmacological ? `<div class="rx-notes"><b>INDICACIONES COMPLEMENTARIAS:</b> ${esc(r.nonPharmacological)}</div>` : ""}
+    <div class="rx-signature"><div class="rx-signature-box"><b>${esc(r.doctor?.name || "MÉDICO")}</b><br>FIRMA</div></div></article>`;
+}
+
+function prescriptionSheetHtml(recipe) {
+  const copy = prescriptionPaperHtml(recipe); return `<div class="prescription-sheet"><div class="prescription-copy">${copy}</div><div class="prescription-divider"><span>CORTE</span></div><div class="prescription-copy">${copy}</div></div>`;
 }
 
 function renderPrescriptionPreview(recipe = APP.selectedPrescription) {
@@ -798,8 +874,10 @@ async function integrityCodeFor(value) {
 function validatePrescriptionLines(lines) {
   if (!lines.length) throw new Error("Agrega al menos un medicamento.");
   return lines.map((line, index) => {
-    const item = { ...line, genericName: text(line.genericName, ""), pharmaceuticalForm: text(line.pharmaceuticalForm, ""), concentration: text(line.concentration, ""), presentation: text(line.presentation, ""), route: text(line.route, ""), dose: text(line.dose, ""), frequency: text(line.frequency, ""), duration: text(line.duration, ""), quantityToDispense: Math.trunc(Number(line.quantityToDispense || 0)) };
-    if (!item.genericName || !item.pharmaceuticalForm || !item.concentration || !item.presentation || !item.route || !item.dose || !item.frequency || !item.duration || item.quantityToDispense < 1) throw new Error(`Completa todos los datos obligatorios del medicamento ${index + 1}.`);
+    const rawQuantity = String(line.quantityToDispense ?? "").trim(); const quantityToDispense = rawQuantity ? Math.trunc(Number(rawQuantity)) : null;
+    const item = { ...line, genericName: text(line.genericName, ""), pharmaceuticalForm: text(line.pharmaceuticalForm, ""), concentration: text(line.concentration, ""), presentation: text(line.presentation, ""), route: text(line.route, ""), dose: text(line.dose, ""), frequency: text(line.frequency, ""), duration: text(line.duration, ""), quantityToDispense };
+    if (!item.genericName || !item.presentation || !item.route || !item.dose || !item.frequency || !item.duration) throw new Error(`Completa los datos clínicos obligatorios del medicamento ${index + 1}.`);
+    if (quantityToDispense !== null && (!Number.isInteger(quantityToDispense) || quantityToDispense < 1 || quantityToDispense > 999)) throw new Error(`La cantidad opcional del medicamento ${index + 1} no es válida.`);
     delete item.lineId; return item;
   });
 }
@@ -886,6 +964,7 @@ async function sendPrescriptionToPharmacy(id, patientId) {
   const linked = (recipe.items || []).filter((item) => item.productCode && item.inventoryId);
   if (!linked.length) throw new Error("La receta no contiene medicamentos vinculados al inventario. Agrégalos desde el buscador para enviarlos al carrito.");
   if (linked.length !== (recipe.items || []).length && !window.confirm("Algunos medicamentos fueron capturados manualmente y no pueden vincularse al inventario. ¿Enviar únicamente los productos vinculados?")) return;
+  if (linked.some((item) => !Number.isInteger(Number(item.quantityToDispense)) || Number(item.quantityToDispense) < 1)) throw new Error("Para enviar a farmacia, captura las piezas a surtir de cada producto vinculado.");
   const store = await db(`mi_farmacia/tiendas/${APP.config.storeId}`); const orderId = firebaseKey(`RX-${id}`).slice(0, 120); const createdAt = isoNow();
   const items = linked.map((item) => ({ idProducto: item.inventoryId, codigo: item.productCode, generica: item.genericName, distintiva: item.brandName || "", nombre: [item.genericName, item.brandName].filter(Boolean).join(" "), presentacion: item.presentation, cantidad: Number(item.quantityToDispense), precioUnitario: Number(item.price || 0), importe: Number(item.price || 0) * Number(item.quantityToDispense) }));
   const piezas = items.reduce((sum, item) => sum + item.cantidad, 0); const totalEstimado = items.reduce((sum, item) => sum + item.importe, 0);
@@ -903,7 +982,7 @@ async function sendPrescriptionToPharmacy(id, patientId) {
 
 function printSelectedPrescription() {
   if (!APP.selectedPrescription?.id) throw new Error("Abre o guarda una receta antes de imprimir.");
-  $("prescription-print").innerHTML = prescriptionPaperHtml(APP.selectedPrescription); $("prescription-print").setAttribute("aria-hidden", "false");
+  $("prescription-print").innerHTML = prescriptionSheetHtml(APP.selectedPrescription); $("prescription-print").setAttribute("aria-hidden", "false");
   window.print(); setTimeout(() => $("prescription-print").setAttribute("aria-hidden", "true"), 300);
 }
 
@@ -987,6 +1066,12 @@ function bindEvents() {
     if (openRecipe) openPrescription(openRecipe.dataset.openPrescription, openRecipe.dataset.patient).catch((error) => toast(error.message, "error"));
     const sendRecipe = event.target.closest("[data-send-prescription]");
     if (sendRecipe) sendPrescriptionToPharmacy(sendRecipe.dataset.sendPrescription, sendRecipe.dataset.patient).catch((error) => toast(error.message, "error"));
+    const editDoctor = event.target.closest("[data-edit-doctor]");
+    if (editDoctor) fillDoctorEditor(editDoctor.dataset.editDoctor);
+    const useDoctor = event.target.closest("[data-use-doctor]");
+    if (useDoctor) chooseDoctor(useDoctor.dataset.useDoctor).catch((error) => toast(error.message, "error"));
+    const removeDoctor = event.target.closest("[data-remove-doctor]");
+    if (removeDoctor) removeDoctorProfile(removeDoctor.dataset.removeDoctor).catch((error) => toast(error.message, "error"));
   });
   $("consultation-form").addEventListener("submit", (event) => saveConsultation(event).catch((error) => toast(error.message, "error")));
   $("consultation-form").addEventListener("reset", () => setTimeout(prepareForms, 0));
@@ -1003,7 +1088,7 @@ function bindEvents() {
   });
   $("prescription-form").addEventListener("change", (event) => {
     if (event.target.matches("[data-rx-field]")) updatePrescriptionLineFromElement(event.target);
-    else renderPrescriptionPreview();
+    else { if (event.target.id === "prescription-doctor") APP.selectedDoctorId = event.target.value; renderPrescriptionPreview(); }
   });
   $("btn-new-prescription").addEventListener("click", () => clearPrescriptionDraft());
   $("btn-print-prescription").addEventListener("click", () => { try { printSelectedPrescription(); } catch (error) { toast(error.message, "error"); } });
@@ -1015,11 +1100,15 @@ function bindEvents() {
   $("btn-export-prescriptions").addEventListener("click", () => { try { exportPrescriptionHistory(); } catch (error) { toast(error.message, "error"); } });
 
   $("clinical-settings-form").addEventListener("submit", (event) => saveMedicalSettings(event).catch((error) => toast(error.message, "error")));
+  $("clinical-contact-form").addEventListener("submit", (event) => saveClinicalContact(event).catch((error) => toast(error.message, "error")));
+  $("folio-settings-form").addEventListener("submit", (event) => saveFolioSettings(event).catch((error) => toast(error.message, "error")));
+  $("btn-new-doctor").addEventListener("click", () => { if (Object.keys(APP.medicalConfig?.profiles || {}).length >= 4) return toast("Ya existen cuatro médicos. Edita o elimina un perfil.", "error"); fillDoctorEditor(""); });
+  $("btn-cancel-doctor-edit").addEventListener("click", () => fillDoctorEditor(APP.selectedDoctorId));
   $("btn-enable-folio-edit").addEventListener("click", () => enableFolioEditing(true));
-  $("settings-university-crest").addEventListener("change", (event) => optimizeImageFile(event.target.files?.[0]).then((data) => { APP.crestDraft = data; setImagePreview("settings-university-crest-preview", data); renderPrescriptionPreview(); }).catch((error) => toast(error.message, "error")));
-  $("settings-doctor-signature").addEventListener("change", (event) => optimizeImageFile(event.target.files?.[0], 700).then((data) => { APP.signatureDraft = data; setImagePreview("settings-doctor-signature-preview", data); renderPrescriptionPreview(); }).catch((error) => toast(error.message, "error")));
-  $("btn-clear-university-crest").addEventListener("click", () => { APP.crestDraft = ""; $("settings-university-crest").value = ""; setImagePreview("settings-university-crest-preview", ""); renderPrescriptionPreview(); });
-  $("btn-clear-doctor-signature").addEventListener("click", () => { APP.signatureDraft = ""; $("settings-doctor-signature").value = ""; setImagePreview("settings-doctor-signature-preview", ""); renderPrescriptionPreview(); });
+  $("settings-university-crest").addEventListener("change", (event) => optimizeImageFile(event.target.files?.[0]).then((data) => { APP.leftImageDraft = data; setImagePreview("settings-university-crest-preview", data); }).catch((error) => toast(error.message, "error")));
+  $("settings-doctor-signature").addEventListener("change", (event) => optimizeImageFile(event.target.files?.[0]).then((data) => { APP.rightImageDraft = data; setImagePreview("settings-doctor-signature-preview", data); }).catch((error) => toast(error.message, "error")));
+  $("btn-clear-university-crest").addEventListener("click", () => { APP.leftImageDraft = ""; $("settings-university-crest").value = ""; setImagePreview("settings-university-crest-preview", ""); });
+  $("btn-clear-doctor-signature").addEventListener("click", () => { APP.rightImageDraft = ""; $("settings-doctor-signature").value = ""; setImagePreview("settings-doctor-signature-preview", ""); });
   window.addEventListener("online", () => flushPending().catch(() => {}));
 }
 
